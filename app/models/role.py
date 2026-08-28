@@ -25,9 +25,7 @@ class Role(TenantAwareModel):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
 
-    permissions = db.relationship(
-        "Permission", secondary=role_permission, lazy="selectin"
-    )
+    permissions = db.relationship("Permission", secondary=role_permission, lazy="selectin")
     memberships = db.relationship("OrganizationUser", back_populates="role")
 
 
