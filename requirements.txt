@@ -1,7 +1,7 @@
 # AFRIVA SaaS - Phase 3 compatible baseline
 Flask==2.3.2
 Flask-SQLAlchemy==3.0.5
-SQLAlchemy==2.0.19
+SQLAlchemy==2.0.50
 alembic==1.11.1
 psycopg2-binary==2.9.9
 Werkzeug==2.3.7
