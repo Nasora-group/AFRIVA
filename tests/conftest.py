@@ -1,9 +1,10 @@
 """Shared pytest fixtures for AFRIVA CRM tests."""
 
 import pytest
-from flask import Flask
+from flask import Flask, g
 
-from app.models import db
+from app.api.sales_dashboard import sales_dashboard_api
+from app.models import Organization, db
 
 
 class TestConfig:
@@ -17,11 +18,39 @@ def app():
     app = Flask(__name__)
     app.config.from_object(TestConfig)
     db.init_app(app)
+    app.register_blueprint(sales_dashboard_api)
     with app.app_context():
         db.create_all()
+        organization = Organization(
+            name="Test Organization",
+            slug="test-organization",
+            status="active",
+        )
+        db.session.add(organization)
+        db.session.commit()
+        app.config["TEST_ORGANIZATION_ID"] = organization.id
         yield app
         db.session.remove()
         db.drop_all()
+
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+
+@pytest.fixture
+def organization(app):
+    with app.app_context():
+        return db.session.get(Organization, app.config["TEST_ORGANIZATION_ID"])
+
+
+@pytest.fixture
+def tenant_context(app, organization):
+    with app.test_request_context():
+        g.current_organization = organization
+        g.current_org_id = organization.id
+        yield
 
 
 @pytest.fixture
