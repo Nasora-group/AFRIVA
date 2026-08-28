@@ -7,9 +7,8 @@ from app.models import ProductBatch, ProductStock, StockMovement, db
 from app.services.sales_service import SalesService
 
 
-def test_pos_sale_consumes_fefo_stock(app, inventory_context):
+def _seed_stock(inventory_context):
     org, store, product = inventory_context
-    service = SalesService()
     db.session.add_all(
         [
             ProductBatch(
@@ -31,13 +30,16 @@ def test_pos_sale_consumes_fefo_stock(app, inventory_context):
         ]
     )
     db.session.commit()
+    return org, store, product
 
-    sale = service.create_sale(
+
+def test_pos_sale_consumes_fefo_stock(app, inventory_context):
+    _, store, product = _seed_stock(inventory_context)
+    sale = SalesService().create_sale(
         [{"product_id": product.id, "quantity": "7", "unit_price": "1000"}],
         store_id=store.id,
     )
     db.session.commit()
-
     assert sale.total_amount == Decimal("7000")
     early = ProductBatch.query.filter_by(batch_number="EARLY").one()
     late = ProductBatch.query.filter_by(batch_number="LATE").one()
@@ -49,16 +51,18 @@ def test_pos_sale_consumes_fefo_stock(app, inventory_context):
 
 def test_pos_sale_rejects_insufficient_stock(app, inventory_context):
     _, store, product = inventory_context
-    service = SalesService()
     with pytest.raises(ValueError, match="non-expired batch stock"):
-        service.create_sale(
+        SalesService().create_sale(
             [{"product_id": product.id, "quantity": "1"}],
             store_id=store.id,
         )
     db.session.rollback()
 
 
-def test_pos_sale_requires_store(app, inventory_context):
+def test_pos_sale_without_store_keeps_legacy_behavior(app, inventory_context):
     _, _, product = inventory_context
-    with pytest.raises(ValueError, match="store_id is required"):
-        SalesService().create_sale([{"product_id": product.id, "quantity": "1"}])
+    sale = SalesService().create_sale(
+        [{"product_id": product.id, "quantity": "1", "unit_price": "100"}]
+    )
+    assert sale.total_amount == Decimal("100")
+    db.session.rollback()
