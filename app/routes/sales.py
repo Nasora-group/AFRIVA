@@ -93,10 +93,12 @@ def list_sales():
     if commercial_id:
         query = query.filter_by(commercial_id=commercial_id)
     rows = query.order_by(Sale.sold_at.desc(), Sale.id.desc()).all()
-    return jsonify({
-        "items": [_sale_json(sale) for sale in rows],
-        "count": len(rows),
-    })
+    return jsonify(
+        {
+            "items": [_sale_json(sale) for sale in rows],
+            "count": len(rows),
+        }
+    )
 
 
 @sales_bp.put("/targets")
@@ -113,10 +115,12 @@ def target():
         )
     except (SalesValidationError, TypeError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify({
-        "id": value.id,
-        "commercial_id": value.commercial_id,
-        "year": value.year,
-        "month": value.month,
-        "target_amount": _money(value.target_amount),
-    })
+    return jsonify(
+        {
+            "id": value.id,
+            "commercial_id": value.commercial_id,
+            "year": value.year,
+            "month": value.month,
+            "target_amount": _money(value.target_amount),
+        }
+    )
