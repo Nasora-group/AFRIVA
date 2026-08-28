@@ -1,14 +1,39 @@
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
 
-from app.models import Payment, ProductStock, StockMovement, db
+from app.models import Payment, ProductBatch, ProductStock, StockMovement, db
 from app.services.payment_service import PaymentService
 from app.services.sales_service import SalesService
 
 
+def _seed_payment_stock(inventory_context, quantity=Decimal("2")):
+    org, store, product = inventory_context
+    db.session.add(
+        ProductBatch(
+            organization_id=org.id,
+            product_id=product.id,
+            store_id=store.id,
+            batch_number="PAYMENT-STOCK",
+            expiry_date=date.today() + timedelta(days=30),
+            quantity=quantity,
+        )
+    )
+    db.session.add(
+        ProductStock(
+            organization_id=org.id,
+            product_id=product.id,
+            store_id=store.id,
+            quantity=quantity,
+        )
+    )
+    db.session.commit()
+    return org, store, product
+
+
 def test_payment_accepts_partial_payments(app, inventory_context):
-    _, store, product = inventory_context
+    _, store, product = _seed_payment_stock(inventory_context)
     sale = SalesService().create_sale(
         [{"product_id": product.id, "quantity": "1", "unit_price": "1000"}],
         store_id=store.id,
@@ -23,7 +48,7 @@ def test_payment_accepts_partial_payments(app, inventory_context):
 
 
 def test_payment_cannot_exceed_sale_total(app, inventory_context):
-    _, store, product = inventory_context
+    _, store, product = _seed_payment_stock(inventory_context)
     sale = SalesService().create_sale(
         [{"product_id": product.id, "quantity": "1", "unit_price": "1000"}],
         store_id=store.id,
@@ -34,7 +59,7 @@ def test_payment_cannot_exceed_sale_total(app, inventory_context):
 
 
 def test_refund_restores_stock_and_marks_payments(app, inventory_context):
-    _, store, product = inventory_context
+    _, store, product = _seed_payment_stock(inventory_context)
     sale = SalesService().create_sale(
         [{"product_id": product.id, "quantity": "2", "unit_price": "1000"}],
         store_id=store.id,
@@ -44,7 +69,7 @@ def test_refund_restores_stock_and_marks_payments(app, inventory_context):
     db.session.commit()
 
     stock = ProductStock.query.filter_by(product_id=product.id, store_id=store.id).one()
-    assert stock.quantity == Decimal("0")
+    assert stock.quantity == Decimal("2")
     assert sale.status == "refunded"
     assert Payment.query.filter_by(sale_id=sale.id, status="refunded").count() == 1
     returns = StockMovement.query.filter_by(
@@ -54,7 +79,7 @@ def test_refund_restores_stock_and_marks_payments(app, inventory_context):
 
 
 def test_refund_is_idempotency_protected(app, inventory_context):
-    _, store, product = inventory_context
+    _, store, product = _seed_payment_stock(inventory_context)
     sale = SalesService().create_sale(
         [{"product_id": product.id, "quantity": "1"}], store_id=store.id
     )
