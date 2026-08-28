@@ -2,8 +2,13 @@ name: AFRIVA CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'phase4/**'
   pull_request:
+    branches:
+      - main
+      - 'phase4/**'
 
 jobs:
   test-and-lint:
