@@ -1,4 +1,5 @@
 """Environment-only application configuration."""
+
 import os
 
 
@@ -12,9 +13,15 @@ class Config:
 
     @classmethod
     def validate(cls):
-        missing = [name for name, value in {
-            "SECRET_KEY": cls.SECRET_KEY,
-            "DATABASE_URL": cls.SQLALCHEMY_DATABASE_URI,
-        }.items() if not value]
+        missing = [
+            name
+            for name, value in {
+                "SECRET_KEY": cls.SECRET_KEY,
+                "DATABASE_URL": cls.SQLALCHEMY_DATABASE_URI,
+            }.items()
+            if not value
+        ]
         if missing:
-            raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+            raise RuntimeError(
+                f"Missing required environment variables: {', '.join(missing)}"
+            )
