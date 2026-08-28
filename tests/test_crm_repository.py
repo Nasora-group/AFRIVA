@@ -1,4 +1,5 @@
 import pytest
+from werkzeug.exceptions import Forbidden
 
 from app.models import Client, Organization, db
 from app.repositories.crm_repository import ClientRepository
@@ -6,7 +7,7 @@ from app.repositories.crm_repository import ClientRepository
 
 def test_repository_requires_tenant(app):
     with app.app_context():
-        with pytest.raises(RuntimeError, match="No current organization"):
+        with pytest.raises(Forbidden):
             ClientRepository().list()
 
 
