@@ -1,9 +1,9 @@
-"""PostgreSQL integration tests for AFRIVA tenant isolation.
+"""Real PostgreSQL Phase 3 tenant-isolation test.
 
-Run with TEST_DATABASE_URL pointing to a disposable PostgreSQL database.
-The suite never uses DATABASE_URL, preventing accidental production access.
+Only TEST_DATABASE_URL is used. Never point it at production.
 """
 import os
+
 import pytest
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash
@@ -12,15 +12,33 @@ from app import create_app
 from app.models import db, Organization, User, OrganizationUser, Role, Permission
 from app.models.role import role_permission
 
-
 pytestmark = pytest.mark.skipif(
     not os.getenv("TEST_DATABASE_URL"),
     reason="TEST_DATABASE_URL is required for PostgreSQL integration tests",
 )
 
 
+RLS_SQL = """
+ALTER TABLE role ENABLE ROW LEVEL SECURITY;
+ALTER TABLE organization_user ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS role_tenant_isolation ON role;
+CREATE POLICY role_tenant_isolation ON role
+USING (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::INTEGER)
+WITH CHECK (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::INTEGER);
+DROP POLICY IF EXISTS organization_user_tenant_isolation ON organization_user;
+CREATE POLICY organization_user_tenant_isolation ON organization_user
+USING (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::INTEGER)
+WITH CHECK (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::INTEGER);
+DROP POLICY IF EXISTS activity_log_tenant_isolation ON activity_log;
+CREATE POLICY activity_log_tenant_isolation ON activity_log
+USING (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::INTEGER)
+WITH CHECK (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::INTEGER);
+"""
+
+
 @pytest.fixture
-def integration_app(monkeypatch):
+def integration_app():
     class TestConfig:
         TESTING = True
         SECRET_KEY = "integration-only-secret"
@@ -32,6 +50,9 @@ def integration_app(monkeypatch):
     with app.app_context():
         db.drop_all()
         db.create_all()
+        for statement in [s.strip() for s in RLS_SQL.split(";") if s.strip()]:
+            db.session.execute(text(statement))
+        db.session.commit()
         yield app
         db.session.remove()
         db.drop_all()
@@ -58,7 +79,6 @@ def test_real_database_tenant_isolation(integration_app):
     ])
     db.session.commit()
 
-    # RLS must allow the active tenant and reject the other tenant.
     db.session.execute(text("SET LOCAL app.current_organization_id = :org"), {"org": org_a.id})
     assert db.session.execute(
         text("SELECT count(*) FROM organization_user WHERE organization_id = :org"),
