@@ -57,5 +57,7 @@ jobs:
         run: python -m black app tests
       - name: Black check
         run: python -m black --check app tests
+      - name: isort format
+        run: python -m isort app tests
       - name: isort check
         run: python -m isort --check-only app tests
