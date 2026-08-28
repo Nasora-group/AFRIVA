@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from app.models import Payment, Sale, db
+from app.models import Payment, ProductBatch, Sale, StockMovement, db
 from app.services.inventory_service import InventoryService
 
 
@@ -45,6 +45,17 @@ class PaymentService:
             raise ValueError("Sale is already refunded")
         if sale.status != "confirmed":
             raise ValueError("Only confirmed sales can be refunded")
+
+        sale_movements = StockMovement.query.filter_by(
+            organization_id=organization_id,
+            reference_type="sale",
+            reference_id=sale.id,
+            movement_type="sale",
+        ).all()
+        movements_by_product = {}
+        for movement in sale_movements:
+            movements_by_product.setdefault(movement.product_id, []).append(movement)
+
         for item in sale.items:
             self.inventory.adjust_stock(
                 product_id=item.product_id,
@@ -55,6 +66,25 @@ class PaymentService:
                 reference_id=sale.id,
                 note="POS sale refund",
             )
+
+            # Restore the exact FEFO batches used by the original sale. This
+            # keeps batch stock and aggregate ProductStock consistent after a
+            # refund rather than returning units only to the aggregate stock.
+            for movement in movements_by_product.get(item.product_id, []):
+                prefix = "FEFO batch "
+                if not movement.note or not movement.note.startswith(prefix):
+                    continue
+                batch_id = int(movement.note[len(prefix) :])
+                batch = ProductBatch.query.filter_by(
+                    id=batch_id,
+                    product_id=item.product_id,
+                    store_id=sale.store_id,
+                    organization_id=organization_id,
+                ).with_for_update().first()
+                if batch is None:
+                    raise ValueError("Original sale batch not found for refund")
+                batch.quantity += abs(Decimal(str(movement.quantity)))
+
         sale.status = "refunded"
         for payment in sale.payments:
             if payment.status == "confirmed":
