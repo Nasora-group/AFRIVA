@@ -3,7 +3,9 @@
 A production authentication provider can populate g.current_user after
 validating the secure session. Tenant middleware then verifies membership.
 """
+
 from functools import wraps
+
 from flask import abort, g
 
 
@@ -21,4 +23,5 @@ def require_authentication(fn):
         if get_current_user() is None:
             abort(401)
         return fn(*args, **kwargs)
+
     return decorated
