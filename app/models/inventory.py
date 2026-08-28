@@ -17,10 +17,16 @@ class ProductStock(TenantAwareModel):
     __tablename__ = "product_stock"
 
     product_id = db.Column(
-        db.Integer, db.ForeignKey("product.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("product.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     store_id = db.Column(
-        db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     quantity = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
     reserved_quantity = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
@@ -34,10 +40,16 @@ class StockMovement(TenantAwareModel):
     __tablename__ = "stock_movement"
 
     product_id = db.Column(
-        db.Integer, db.ForeignKey("product.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("product.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     store_id = db.Column(
-        db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     movement_type = db.Column(db.String(30), nullable=False)
     quantity = db.Column(db.Numeric(14, 3), nullable=False)
@@ -50,10 +62,16 @@ class ProductBatch(TenantAwareModel):
     __tablename__ = "product_batch"
 
     product_id = db.Column(
-        db.Integer, db.ForeignKey("product.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("product.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     store_id = db.Column(
-        db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     batch_number = db.Column(db.String(100), nullable=False)
     expiry_date = db.Column(db.Date, nullable=True, index=True)
@@ -67,10 +85,16 @@ class StockTransfer(TenantAwareModel):
     __tablename__ = "stock_transfer"
 
     source_store_id = db.Column(
-        db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     destination_store_id = db.Column(
-        db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     status = db.Column(db.String(30), nullable=False, default="draft", index=True)
     reference = db.Column(db.String(100), nullable=True, index=True)
@@ -93,11 +117,17 @@ class StockTransferItem(TenantAwareModel):
         index=True,
     )
     product_id = db.Column(
-        db.Integer, db.ForeignKey("product.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("product.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     quantity = db.Column(db.Numeric(14, 3), nullable=False)
     batch_id = db.Column(
-        db.Integer, db.ForeignKey("product_batch.id", ondelete="RESTRICT"), nullable=True, index=True
+        db.Integer,
+        db.ForeignKey("product_batch.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
     )
 
     transfer = db.relationship("StockTransfer", back_populates="items")
