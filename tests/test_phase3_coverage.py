@@ -124,9 +124,14 @@ def test_tenant_context_selects_membership_and_sets_context(app, monkeypatch):
 
 
 def test_tenant_context_falls_back_to_first_membership(app, monkeypatch):
+    user = SimpleNamespace(id=10)
     membership = SimpleNamespace(user_id=10, organization_id=30, status="active")
     organization = SimpleNamespace(id=30, status="active")
-    user = SimpleNamespace(id=10, organization_users=[membership])
+    query = Mock()
+    query.filter_by.side_effect = [query, query]
+    query.order_by.return_value = query
+    query.first.side_effect = [None, membership]
+    monkeypatch.setattr(tenant_middleware.OrganizationUser, "query", query)
     monkeypatch.setattr(tenant_middleware, "db_get_organization", lambda org_id: organization)
     with app.test_request_context("/"):
         g.current_user = user
@@ -143,7 +148,7 @@ def test_tenant_context_rejects_no_membership(app, monkeypatch):
     query.first.return_value = None
     monkeypatch.setattr(tenant_middleware.OrganizationUser, "query", query)
     with app.test_request_context("/"):
-        g.current_user = SimpleNamespace(id=10, organization_users=[])
+        g.current_user = SimpleNamespace(id=10)
         with pytest.raises(Exception) as exc:
             load_tenant_context()
         assert getattr(exc.value, "code", None) == 403
