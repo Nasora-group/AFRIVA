@@ -1,6 +1,6 @@
 """Application services for CRM operations."""
 
-from app.models import Client, Commercial, Prospect, Prospection, Tour, Visit, db
+from app.models import Client, Prospect, Prospection, Visit, db
 from app.repositories.crm_repository import (
     ClientRepository,
     CommercialRepository,
