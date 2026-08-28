@@ -3,8 +3,9 @@
 import pytest
 from flask import Flask, g
 
+from app.api.pos import pos_api
 from app.api.sales_dashboard import sales_dashboard_api
-from app.models import Organization, db
+from app.models import Organization, User, db
 
 
 class TestConfig:
@@ -19,6 +20,7 @@ def app():
     app.config.from_object(TestConfig)
     db.init_app(app)
     app.register_blueprint(sales_dashboard_api)
+    app.register_blueprint(pos_api)
     with app.app_context():
         db.create_all()
         organization = Organization(
@@ -43,6 +45,20 @@ def client(app):
 def organization(app):
     with app.app_context():
         return db.session.get(Organization, app.config["TEST_ORGANIZATION_ID"])
+
+
+@pytest.fixture
+def user(app):
+    with app.app_context():
+        user = User(
+            email="pos-tester@example.test",
+            password_hash="test-hash",
+            first_name="POS",
+            last_name="Tester",
+        )
+        db.session.add(user)
+        db.session.commit()
+        return user
 
 
 @pytest.fixture
