@@ -1,5 +1,7 @@
 """Tenant-scoped JSON API for sales."""
 
+from datetime import date
+
 from flask import Blueprint, jsonify, request
 
 from app.models import db
@@ -16,6 +18,15 @@ def _pagination():
     return min(max(request.args.get("limit", 100, type=int), 1), 100), max(
         request.args.get("offset", 0, type=int), 0
     )
+
+
+def _sale_date(value):
+    if value in (None, ""):
+        return date.today()
+    try:
+        return date.fromisoformat(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("sale_date must use YYYY-MM-DD format") from exc
 
 
 @sales_api.get("/products")
@@ -65,7 +76,7 @@ def create_sale():
             items=payload.get("items", []),
             commercial_id=payload.get("commercial_id"),
             client_id=payload.get("client_id"),
-            sale_date=payload.get("sale_date"),
+            sale_date=_sale_date(payload.get("sale_date")),
             status=payload.get("status", "confirmed"),
         )
         db.session.commit()
