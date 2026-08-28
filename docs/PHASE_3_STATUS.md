@@ -14,15 +14,19 @@
 - Global Permission catalog
 - ActivityLog audit model
 - Tenant context middleware
-- Authentication primitives
+- Session authentication foundation
 - Tenant-aware repository base
 - Tenant-aware service base
 - RBAC decorator
 - Soft-delete primitive
-- Pytest foundation
-- Cross-tenant contract tests
-- `.env.example`
-- `.gitignore`
+- PostgreSQL foundation migration
+- PostgreSQL RLS defense-in-depth migration
+- PostgreSQL integration test suite
+- CI with PostgreSQL service
+- pytest + coverage gate
+- flake8 / black / isort CI gates
+- reproducible Phase 3 test script
+- Phase 3 validation runbook
 
 ### Sécurité
 
@@ -33,14 +37,28 @@
 - les créations imposent le tenant du contexte
 - les relations doivent être validées dans le même tenant avant toute opération métier
 - aucune suppression physique des données métier via le repository
+- PostgreSQL RLS fournit une seconde barrière pour le socle tenant-aware
+- les tests d'intégration utilisent exclusivement `TEST_DATABASE_URL`
+- la CI utilise une PostgreSQL éphémère et ne possède aucun secret de production
 
-### Validation finale encore requise avant Phase 4
+### Validation opérationnelle
 
-1. Brancher un provider d'authentification réel et sécurisé.
-2. Générer et exécuter les migrations Alembic contre une PostgreSQL de test.
-3. Remplacer les contract tests par des tests d'intégration DB complets Org A / Org B.
-4. Ajouter les tests RBAC et relations cross-tenant.
-5. Ajouter CI avec pytest + coverage + lint.
-6. Activer PostgreSQL RLS en défense en profondeur après validation du schéma.
+Le code et les fichiers de validation sont présents. La validation finale dépend de l'exécution du workflow GitHub Actions dans GitHub avec PostgreSQL.
 
-**Important :** la Phase 3 code-first est en place, mais la phase ne doit être déclarée totalement sécurisée qu'après l'exécution des tests PostgreSQL réels dans CI. Aucun module métier ne doit contourner ces contrôles.
+Runbook : `docs/PHASE_3_RUNBOOK.md`
+
+### Gate avant Phase 4
+
+La Phase 4 CRM/POS/Stock ne doit commencer que lorsque GitHub Actions confirme :
+
+- tests verts ;
+- coverage >= 80 % ;
+- lint vert ;
+- tests PostgreSQL Org A / Org B verts ;
+- RLS validée ;
+- aucun accès cross-tenant ;
+- aucune commande exécutée contre la production.
+
+**Statut : SOCLE PHASE 3 PRÊT POUR VALIDATION CI.**
+
+La Phase 3 ne sera déclarée « validée » qu'après le premier workflow CI vert.
