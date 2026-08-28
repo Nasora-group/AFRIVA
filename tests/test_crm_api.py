@@ -1,8 +1,5 @@
 """API tests for the tenant-scoped CRM endpoints."""
 
-import pytest
-from werkzeug.exceptions import Forbidden
-
 from app.api.crm import crm_api
 from app.models import Client, Organization, db
 from app.repositories.crm_repository import ClientRepository
