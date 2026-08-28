@@ -1,11 +1,19 @@
 """AFRIVA Flask application factory."""
-from flask import Flask
+from flask import Flask, g
+
+from .config import Config
+from .models import db
 
 
-def create_app(config_object=None):
+def create_app(config_object=Config):
     app = Flask(__name__)
-    if config_object:
-        app.config.from_object(config_object)
-    else:
-        app.config.from_prefixed_env()
+    app.config.from_object(config_object)
+    db.init_app(app)
+
+    from .middleware.tenant_middleware import load_tenant_context
+
+    @app.before_request
+    def tenant_context():
+        load_tenant_context()
+
     return app
