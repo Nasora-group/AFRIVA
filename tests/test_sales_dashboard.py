@@ -1,12 +1,13 @@
 from datetime import date
 from decimal import Decimal
 
-from app.api.sales_dashboard import sales_dashboard_api
 from app.models import Sale, SalesTarget, db
 from app.services.sales_dashboard_service import SalesDashboardService
 
 
-def test_dashboard_service_aggregates_revenue_and_target(app, organization):
+def test_dashboard_service_aggregates_revenue_and_target(
+    app, organization, tenant_context
+):
     with app.app_context():
         sale = Sale(
             organization_id=organization.id,
