@@ -1,4 +1,5 @@
 """Behavioral coverage for Phase 3 security-critical paths."""
+
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -10,8 +11,12 @@ from app import create_app
 from app.auth import authenticate, load_current_user, login_required, login_user, logout_user
 from app.config import Config
 from app.middleware import tenant_middleware
-from app.middleware.tenant_middleware import get_current_organization, get_current_org_id, load_tenant_context
-from app.models import db, User
+from app.middleware.tenant_middleware import (
+    get_current_org_id,
+    get_current_organization,
+    load_tenant_context,
+)
+from app.models import User, db
 from app.repositories.base_repository import BaseRepository
 from app.services import base_service
 from app.services.base_service import BaseService
