@@ -92,9 +92,7 @@ def create_sale(
     return sale
 
 
-def set_sales_target(
-    *, organization_id, commercial_id, year, month, target_amount
-):
+def set_sales_target(*, organization_id, commercial_id, year, month, target_amount):
     try:
         year = int(year)
         month = int(month)
