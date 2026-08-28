@@ -27,13 +27,9 @@ def app():
 
 @pytest.fixture
 def tenant(app):
-    organization = Organization(name="Test Org", slug="test-org")
-    db.session.add(organization)
-    db.session.commit()
-    g.current_organization = organization
-    return organization
-
-
-@pytest.fixture
-def tenant_ids():
-    return {"org_a": 1, "org_b": 2}
+    with app.app_context():
+        organization = Organization(name="Test Org", slug="test-org")
+        db.session.add(organization)
+        db.session.commit()
+        g.current_organization = organization
+        return organization
