@@ -1,10 +1,11 @@
 from decimal import Decimal
 
-from app.models import CashRegister, CashSession, Store, db
+from app.models import CashRegister, CashSession, Store, User, db
 
 
-def _setup_register(app, organization_id, user_id):
+def _setup_register(app, organization_id):
     with app.app_context():
+        user = User.query.filter_by(email="pos-tester@example.test").first()
         store = Store(
             organization_id=organization_id,
             name="Main Store",
@@ -20,11 +21,11 @@ def _setup_register(app, organization_id, user_id):
         )
         db.session.add(register)
         db.session.commit()
-        return register.id, user_id
+        return register.id, user.id
 
 
 def test_open_and_close_cash_session(client, app, organization, user):
-    register_id, user_id = _setup_register(app, organization.id, user.id)
+    register_id, user_id = _setup_register(app, organization.id)
 
     response = client.post(
         "/api/v1/pos/sessions/open",
@@ -46,7 +47,7 @@ def test_open_and_close_cash_session(client, app, organization, user):
 
 
 def test_second_open_session_is_rejected(client, app, organization, user):
-    register_id, user_id = _setup_register(app, organization.id, user.id)
+    register_id, user_id = _setup_register(app, organization.id)
     payload = {
         "register_id": register_id,
         "opened_by": user_id,
@@ -58,7 +59,7 @@ def test_second_open_session_is_rejected(client, app, organization, user):
 
 
 def test_invalid_opening_amount_is_rejected(client, app, organization, user):
-    register_id, user_id = _setup_register(app, organization.id, user.id)
+    register_id, user_id = _setup_register(app, organization.id)
     response = client.post(
         "/api/v1/pos/sessions/open",
         json={
@@ -71,7 +72,7 @@ def test_invalid_opening_amount_is_rejected(client, app, organization, user):
 
 
 def test_session_is_persisted_closed(client, app, organization, user):
-    register_id, user_id = _setup_register(app, organization.id, user.id)
+    register_id, user_id = _setup_register(app, organization.id)
     response = client.post(
         "/api/v1/pos/sessions/open",
         json={
