@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.models import ProductBatch, ProductStock, StockMovement, db
+from app.models import ProductBatch, StockMovement, db
 from app.services.sales_service import SalesService
 
 
