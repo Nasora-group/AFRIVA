@@ -36,9 +36,7 @@ def test_crm_models_create_and_link(app):
     db.session.add(org)
     db.session.flush()
 
-    commercial = Commercial(
-        organization_id=org.id, first_name="Awa", last_name="Diop"
-    )
+    commercial = Commercial(organization_id=org.id, first_name="Awa", last_name="Diop")
     client = Client(organization_id=org.id, name="Client A")
     prospect = Prospect(organization_id=org.id, name="Prospect A")
     db.session.add_all([commercial, client, prospect])
