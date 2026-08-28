@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from app.models import Payment, Sale, StockMovement, db
+from app.models import Payment, Sale, db
 from app.services.inventory_service import InventoryService
 
 
@@ -59,17 +59,5 @@ class PaymentService:
         for payment in sale.payments:
             if payment.status == "confirmed":
                 payment.status = "refunded"
-        db.session.add(
-            StockMovement(
-                organization_id=organization_id,
-                product_id=sale.items[0].product_id if sale.items else 0,
-                store_id=sale.store_id,
-                movement_type="return",
-                quantity=Decimal("0"),
-                reference_type="sale_refund",
-                reference_id=sale.id,
-                note="Refund completed",
-            )
-        )
         db.session.flush()
         return sale
