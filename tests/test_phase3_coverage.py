@@ -7,10 +7,20 @@ from flask import g, session
 from werkzeug.security import generate_password_hash
 
 from app import create_app
-from app.auth import authenticate, load_current_user, login_required, login_user, logout_user
+from app.auth import (
+    authenticate,
+    load_current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
 from app.config import Config
 from app.middleware import tenant_middleware
-from app.middleware.tenant_middleware import get_current_organization, get_current_org_id, load_tenant_context
+from app.middleware.tenant_middleware import (
+    get_current_organization,
+    get_current_org_id,
+    load_tenant_context,
+)
 from app.models import db, User
 from app.repositories.base_repository import BaseRepository
 from app.services import base_service
@@ -34,7 +44,11 @@ def app():
 
 
 def test_authenticate_success_and_failures(app):
-    user = User(email="coverage@example.test", password_hash=generate_password_hash("secret"), status="active")
+    user = User(
+        email="coverage@example.test",
+        password_hash=generate_password_hash("secret"),
+        status="active",
+    )
     db.session.add(user)
     db.session.commit()
     with app.test_request_context("/"):
@@ -44,7 +58,11 @@ def test_authenticate_success_and_failures(app):
 
 
 def test_auth_session_lifecycle(app):
-    user = User(email="session@example.test", password_hash=generate_password_hash("secret"), status="active")
+    user = User(
+        email="session@example.test",
+        password_hash=generate_password_hash("secret"),
+        status="active",
+    )
     db.session.add(user)
     db.session.commit()
     with app.test_request_context("/"):
@@ -58,7 +76,11 @@ def test_auth_session_lifecycle(app):
 
 
 def test_load_current_user_invalid_or_inactive_session(app):
-    inactive = User(email="inactive@example.test", password_hash=generate_password_hash("secret"), status="suspended")
+    inactive = User(
+        email="inactive@example.test",
+        password_hash=generate_password_hash("secret"),
+        status="suspended",
+    )
     db.session.add(inactive)
     db.session.commit()
     with app.test_request_context("/"):
@@ -78,7 +100,11 @@ def test_login_required_allows_authenticated_user(app):
         calls.append(value)
         return "ok"
 
-    user = User(email="protected@example.test", password_hash=generate_password_hash("secret"), status="active")
+    user = User(
+        email="protected@example.test",
+        password_hash=generate_password_hash("secret"),
+        status="active",
+    )
     db.session.add(user)
     db.session.commit()
     with app.test_request_context("/"):
@@ -113,7 +139,9 @@ def test_tenant_context_selects_membership_and_sets_context(app, monkeypatch):
     query.order_by.return_value = query
     query.first.return_value = membership
     monkeypatch.setattr(tenant_middleware.OrganizationUser, "query", query)
-    monkeypatch.setattr(tenant_middleware, "db_get_organization", lambda org_id: organization)
+    monkeypatch.setattr(
+        tenant_middleware, "db_get_organization", lambda org_id: organization
+    )
     with app.test_request_context("/"):
         g.current_user = user
         session["current_org_id"] = 20
@@ -132,7 +160,9 @@ def test_tenant_context_falls_back_to_first_membership(app, monkeypatch):
     query.order_by.return_value = query
     query.first.return_value = membership
     monkeypatch.setattr(tenant_middleware.OrganizationUser, "query", query)
-    monkeypatch.setattr(tenant_middleware, "db_get_organization", lambda org_id: organization)
+    monkeypatch.setattr(
+        tenant_middleware, "db_get_organization", lambda org_id: organization
+    )
     with app.test_request_context("/"):
         g.current_user = user
         load_tenant_context()
@@ -161,7 +191,9 @@ def test_tenant_context_rejects_suspended_organization(app, monkeypatch):
     query.filter_by.return_value = query
     query.first.return_value = membership
     monkeypatch.setattr(tenant_middleware.OrganizationUser, "query", query)
-    monkeypatch.setattr(tenant_middleware, "db_get_organization", lambda org_id: organization)
+    monkeypatch.setattr(
+        tenant_middleware, "db_get_organization", lambda org_id: organization
+    )
     with app.test_request_context("/"):
         g.current_user = SimpleNamespace(id=10)
         with pytest.raises(Exception) as exc:
@@ -207,7 +239,9 @@ def test_repository_filters_and_soft_deletes(app, monkeypatch):
     monkeypatch.setattr(db.session, "add", Mock())
     monkeypatch.setattr(db.session, "flush", Mock())
     assert repo.get_for_organization(1, 2) is entity
-    assert repo.list_for_organization(1, status="active", organization_id=999) == [entity]
+    assert repo.list_for_organization(1, status="active", organization_id=999) == [
+        entity
+    ]
     created = repo.create_for_organization(1, organization_id=999, name="X")
     assert created.organization_id == 1
     assert created.name == "X"
@@ -238,6 +272,8 @@ def test_service_delegates_all_tenant_operations(monkeypatch):
 
 def test_service_without_tenant_context_propagates_forbidden(monkeypatch):
     service = BaseService(Mock())
-    monkeypatch.setattr(base_service, "get_current_org_id", Mock(side_effect=Exception("403")))
+    monkeypatch.setattr(
+        base_service, "get_current_org_id", Mock(side_effect=Exception("403"))
+    )
     with pytest.raises(Exception):
         service.list_for_current_org()
