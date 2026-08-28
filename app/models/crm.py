@@ -49,18 +49,26 @@ class Visit(TenantAwareModel):
     __tablename__ = "visit"
 
     commercial_id = db.Column(
-        db.Integer, db.ForeignKey("commercial.id", ondelete="RESTRICT"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("commercial.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     client_id = db.Column(
-        db.Integer, db.ForeignKey("client.id", ondelete="RESTRICT"),
-        nullable=True, index=True,
+        db.Integer,
+        db.ForeignKey("client.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
     )
     prospect_id = db.Column(
-        db.Integer, db.ForeignKey("prospect.id", ondelete="RESTRICT"),
-        nullable=True, index=True,
+        db.Integer,
+        db.ForeignKey("prospect.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
     )
-    visited_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    visited_at = db.Column(
+        db.DateTime(timezone=True), nullable=False, default=utcnow
+    )
     duration_minutes = db.Column(db.Integer)
     latitude = db.Column(db.Numeric(10, 7))
     longitude = db.Column(db.Numeric(10, 7))
@@ -77,12 +85,16 @@ class Prospection(TenantAwareModel):
     __tablename__ = "prospection"
 
     commercial_id = db.Column(
-        db.Integer, db.ForeignKey("commercial.id", ondelete="RESTRICT"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("commercial.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     prospect_id = db.Column(
-        db.Integer, db.ForeignKey("prospect.id", ondelete="RESTRICT"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("prospect.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     reason = db.Column(db.Text)
     interlocutor = db.Column(db.String(255))
@@ -100,8 +112,10 @@ class Tour(TenantAwareModel):
     __tablename__ = "tour"
 
     commercial_id = db.Column(
-        db.Integer, db.ForeignKey("commercial.id", ondelete="RESTRICT"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("commercial.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     name = db.Column(db.String(255), nullable=False)
     planned_date = db.Column(db.Date, nullable=False, index=True)
@@ -111,7 +125,9 @@ class Tour(TenantAwareModel):
 
     commercial = db.relationship("Commercial")
     stops = db.relationship(
-        "TourStop", back_populates="tour", cascade="all, delete-orphan",
+        "TourStop",
+        back_populates="tour",
+        cascade="all, delete-orphan",
         order_by="TourStop.position",
     )
 
@@ -120,14 +136,20 @@ class TourStop(TenantAwareModel):
     __tablename__ = "tour_stop"
 
     tour_id = db.Column(
-        db.Integer, db.ForeignKey("tour.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("tour.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     client_id = db.Column(
-        db.Integer, db.ForeignKey("client.id", ondelete="RESTRICT"), nullable=True
+        db.Integer,
+        db.ForeignKey("client.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     prospect_id = db.Column(
-        db.Integer, db.ForeignKey("prospect.id", ondelete="RESTRICT"), nullable=True
+        db.Integer,
+        db.ForeignKey("prospect.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     position = db.Column(db.Integer, nullable=False, default=1)
     status = db.Column(db.String(30), nullable=False, default="planned")
@@ -143,14 +165,20 @@ class Task(TenantAwareModel):
     __tablename__ = "crm_task"
 
     commercial_id = db.Column(
-        db.Integer, db.ForeignKey("commercial.id", ondelete="RESTRICT"),
-        nullable=True, index=True,
+        db.Integer,
+        db.ForeignKey("commercial.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
     )
     client_id = db.Column(
-        db.Integer, db.ForeignKey("client.id", ondelete="RESTRICT"), nullable=True
+        db.Integer,
+        db.ForeignKey("client.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     prospect_id = db.Column(
-        db.Integer, db.ForeignKey("prospect.id", ondelete="RESTRICT"), nullable=True
+        db.Integer,
+        db.ForeignKey("prospect.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
@@ -166,14 +194,20 @@ class Note(TenantAwareModel):
     __tablename__ = "crm_note"
 
     commercial_id = db.Column(
-        db.Integer, db.ForeignKey("commercial.id", ondelete="RESTRICT"),
-        nullable=True, index=True,
+        db.Integer,
+        db.ForeignKey("commercial.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
     )
     client_id = db.Column(
-        db.Integer, db.ForeignKey("client.id", ondelete="RESTRICT"), nullable=True
+        db.Integer,
+        db.ForeignKey("client.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     prospect_id = db.Column(
-        db.Integer, db.ForeignKey("prospect.id", ondelete="RESTRICT"), nullable=True
+        db.Integer,
+        db.ForeignKey("prospect.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     body = db.Column(db.Text, nullable=False)
 
