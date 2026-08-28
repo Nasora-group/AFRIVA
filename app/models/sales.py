@@ -19,14 +19,20 @@ class Sale(TenantAwareModel):
     __tablename__ = "sale"
 
     commercial_id = db.Column(
-        db.Integer, db.ForeignKey("commercial.id", ondelete="RESTRICT"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("commercial.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     client_id = db.Column(
-        db.Integer, db.ForeignKey("client.id", ondelete="RESTRICT"),
-        nullable=True, index=True,
+        db.Integer,
+        db.ForeignKey("client.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
     )
-    sold_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, index=True)
+    sold_at = db.Column(
+        db.DateTime(timezone=True), nullable=False, default=utcnow, index=True
+    )
     status = db.Column(db.String(30), nullable=False, default="draft", index=True)
     notes = db.Column(db.Text)
     total_amount = db.Column(db.Numeric(14, 2), nullable=False, default=0)
@@ -45,12 +51,16 @@ class SaleLine(TenantAwareModel):
     __tablename__ = "sale_line"
 
     sale_id = db.Column(
-        db.Integer, db.ForeignKey("sale.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("sale.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     product_id = db.Column(
-        db.Integer, db.ForeignKey("product.id", ondelete="RESTRICT"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("product.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     quantity = db.Column(db.Numeric(14, 3), nullable=False, default=1)
     unit_price = db.Column(db.Numeric(14, 2), nullable=False)
@@ -68,8 +78,10 @@ class SalesTarget(TenantAwareModel):
     __tablename__ = "sales_target"
 
     commercial_id = db.Column(
-        db.Integer, db.ForeignKey("commercial.id", ondelete="RESTRICT"),
-        nullable=False, index=True,
+        db.Integer,
+        db.ForeignKey("commercial.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     year = db.Column(db.Integer, nullable=False, index=True)
     month = db.Column(db.Integer, nullable=False, index=True)
@@ -79,8 +91,11 @@ class SalesTarget(TenantAwareModel):
 
     __table_args__ = (
         db.UniqueConstraint(
-            "organization_id", "commercial_id", "year", "month",
-            name="uq_sales_target_org_commercial_period"
+            "organization_id",
+            "commercial_id",
+            "year",
+            "month",
+            name="uq_sales_target_org_commercial_period",
         ),
         db.CheckConstraint("month BETWEEN 1 AND 12", name="ck_sales_target_month"),
     )
