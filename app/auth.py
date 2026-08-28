@@ -1,7 +1,10 @@
 """Minimal session authentication primitives for the Phase 3 foundation."""
+
 from functools import wraps
+
 from flask import abort, g, session
 from werkzeug.security import check_password_hash
+
 from app.models.user import User
 
 
@@ -41,4 +44,5 @@ def login_required(fn):
         if load_current_user() is None:
             abort(401)
         return fn(*args, **kwargs)
+
     return wrapper
