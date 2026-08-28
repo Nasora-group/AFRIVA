@@ -11,7 +11,7 @@ from app.auth import authenticate, load_current_user, login_required, login_user
 from app.config import Config
 from app.middleware import tenant_middleware
 from app.middleware.tenant_middleware import get_current_organization, get_current_org_id, load_tenant_context
-from app.models import db, OrganizationUser, User
+from app.models import db, User
 from app.repositories.base_repository import BaseRepository
 from app.services import base_service
 from app.services.base_service import BaseService
@@ -124,19 +124,16 @@ def test_tenant_context_selects_membership_and_sets_context(app, monkeypatch):
 
 
 def test_tenant_context_falls_back_to_first_membership(app, monkeypatch):
-    user = SimpleNamespace(id=10)
     membership = SimpleNamespace(user_id=10, organization_id=30, status="active")
     organization = SimpleNamespace(id=30, status="active")
-    query = Mock()
-    query.filter_by.return_value = query
-    query.order_by.return_value = query
-    query.first.side_effect = [None, membership]
-    monkeypatch.setattr(tenant_middleware.OrganizationUser, "query", query)
+    user = SimpleNamespace(id=10, organization_users=[membership])
     monkeypatch.setattr(tenant_middleware, "db_get_organization", lambda org_id: organization)
     with app.test_request_context("/"):
         g.current_user = user
         load_tenant_context()
         assert get_current_org_id() == 30
+        assert g.current_membership is membership
+        assert g.current_organization is organization
 
 
 def test_tenant_context_rejects_no_membership(app, monkeypatch):
@@ -146,7 +143,7 @@ def test_tenant_context_rejects_no_membership(app, monkeypatch):
     query.first.return_value = None
     monkeypatch.setattr(tenant_middleware.OrganizationUser, "query", query)
     with app.test_request_context("/"):
-        g.current_user = SimpleNamespace(id=10)
+        g.current_user = SimpleNamespace(id=10, organization_users=[])
         with pytest.raises(Exception) as exc:
             load_tenant_context()
         assert getattr(exc.value, "code", None) == 403
