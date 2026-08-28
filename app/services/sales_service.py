@@ -2,13 +2,21 @@
 
 from decimal import Decimal
 
-from app.models import Product, Sale, SaleItem, SalesTarget, db
+from app.models import (
+    Product,
+    Sale,
+    SaleItem,
+    SalesTarget,
+    StockMovement,
+    db,
+)
 from app.repositories.crm_repository import ClientRepository, CommercialRepository
 from app.repositories.sales_repository import (
     ProductRepository,
     SaleRepository,
     SalesTargetRepository,
 )
+from app.services.inventory_service import InventoryService
 
 
 class SalesService:
@@ -18,6 +26,7 @@ class SalesService:
         self.targets = SalesTargetRepository()
         self.clients = ClientRepository()
         self.commercials = CommercialRepository()
+        self.inventory = InventoryService()
 
     def create_product(self, **data):
         return self.products.add(Product(**data))
@@ -29,6 +38,9 @@ class SalesService:
             raise ValueError("Client not found in current organization")
         if not items:
             raise ValueError("At least one sale item is required")
+        store_id = data.get("store_id")
+        if store_id is None:
+            raise ValueError("store_id is required for stock-controlled sales")
 
         organization_id = self.sales._organization_id()
         sale = Sale(
@@ -46,6 +58,7 @@ class SalesService:
             unit_price = Decimal(str(item.get("unit_price", product.unit_price)))
             if quantity <= 0 or unit_price < 0:
                 raise ValueError("Invalid quantity or unit price")
+            allocations = self.inventory.consume_fefo(product.id, store_id, quantity)
             line_total = quantity * unit_price
             sale.items.append(
                 SaleItem(
@@ -57,9 +70,24 @@ class SalesService:
                 )
             )
             total += line_total
+            for allocation in allocations:
+                db.session.add(
+                    StockMovement(
+                        organization_id=organization_id,
+                        product_id=product.id,
+                        store_id=store_id,
+                        movement_type="sale",
+                        quantity=-allocation["quantity"],
+                        reference_type="sale",
+                        note=f"FEFO batch {allocation['batch_id']}",
+                    )
+                )
         sale.total_amount = total
         db.session.add(sale)
         db.session.flush()
+        for movement in db.session.new:
+            if isinstance(movement, StockMovement) and movement.reference_type == "sale":
+                movement.reference_id = sale.id
         return sale
 
     def set_target(self, year, month, target_amount, commercial_id=None):
