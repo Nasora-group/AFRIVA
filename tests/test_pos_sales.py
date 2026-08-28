@@ -1,6 +1,16 @@
 from decimal import Decimal
 
-from app.models import CashRegister, CashSession, Organization, Payment, Product, Sale, SaleItem, Store, User, db
+from app.models import (
+    CashRegister,
+    Organization,
+    Payment,
+    Product,
+    Sale,
+    SaleItem,
+    Store,
+    User,
+    db,
+)
 
 
 def _tenant(monkeypatch, org):
@@ -71,7 +81,11 @@ def test_pos_checkout_creates_sale_lines_and_payment(app, monkeypatch):
             ],
             "payments": [
                 {"method": "cash", "amount": "2000.00"},
-                {"method": "mobile_money", "amount": "1500.00", "reference": "TX-01"},
+                {
+                    "method": "mobile_money",
+                    "amount": "1500.00",
+                    "reference": "TX-01",
+                },
             ],
         },
     )
@@ -89,7 +103,9 @@ def test_pos_checkout_creates_sale_lines_and_payment(app, monkeypatch):
         assert sale.cash_session_id == session_id
         assert len(sale.items) == 2
         assert len(sale.payments) == 2
-        assert sum((p.amount for p in sale.payments), Decimal("0.00")) == Decimal("3500.00")
+        assert sum((p.amount for p in sale.payments), Decimal("0.00")) == Decimal(
+            "3500.00"
+        )
 
 
 def test_pos_checkout_rejects_payment_mismatch_and_rolls_back(app, monkeypatch):
