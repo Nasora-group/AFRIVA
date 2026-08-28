@@ -33,12 +33,10 @@ class BillingService:
         if plan is None:
             raise ValueError("Active plan not found")
         existing = Subscription.query.filter_by(
-            organization_id=organization_id,
-            status="active",
+            organization_id=organization_id, status="active"
         ).first()
         trialing = Subscription.query.filter_by(
-            organization_id=organization_id,
-            status="trialing",
+            organization_id=organization_id, status="trialing"
         ).first()
         if existing or trialing:
             raise ValueError("Organization already has an active subscription")
@@ -81,16 +79,16 @@ class BillingService:
             raise ValueError("Subscription not found")
         if subscription.status not in {"active", "trialing"}:
             raise ValueError("Subscription is not billable")
-        amount = Decimal(str(
+        price = (
             subscription.plan.monthly_price
             if subscription.billing_interval == "monthly"
             else subscription.plan.yearly_price
-        ))
+        )
         invoice = Invoice(
             organization_id=organization_id,
             subscription_id=subscription.id,
             number=number,
-            amount=amount,
+            amount=Decimal(str(price)),
             currency="XOF",
             due_at=due_at,
         )
@@ -98,7 +96,9 @@ class BillingService:
         db.session.flush()
         return invoice
 
-    def record_payment(self, invoice_id, amount, provider="manual", provider_reference=None):
+    def record_payment(
+        self, invoice_id, amount, provider="manual", provider_reference=None
+    ):
         organization_id = self._organization_id()
         invoice = Invoice.query.filter_by(
             id=invoice_id, organization_id=organization_id
@@ -122,11 +122,13 @@ class BillingService:
         )
         db.session.add(payment)
         db.session.flush()
+        payments = BillingPayment.query.filter_by(
+            invoice_id=invoice.id,
+            organization_id=organization_id,
+            status="succeeded",
+        ).all()
         paid_total = sum(
-            (Decimal(str(p.amount)) for p in BillingPayment.query.filter_by(
-                invoice_id=invoice.id, organization_id=organization_id, status="succeeded"
-            ).all()),
-            Decimal("0"),
+            (Decimal(str(item.amount)) for item in payments), Decimal("0")
         )
         if paid_total >= Decimal(str(invoice.amount)):
             invoice.status = "paid"
