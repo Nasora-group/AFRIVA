@@ -128,9 +128,9 @@ def test_tenant_context_falls_back_to_first_membership(app, monkeypatch):
     membership = SimpleNamespace(user_id=10, organization_id=30, status="active")
     organization = SimpleNamespace(id=30, status="active")
     query = Mock()
-    query.filter_by.side_effect = [query, query]
+    query.filter_by.return_value = query
     query.order_by.return_value = query
-    query.first.side_effect = [None, membership]
+    query.first.return_value = membership
     monkeypatch.setattr(tenant_middleware.OrganizationUser, "query", query)
     monkeypatch.setattr(tenant_middleware, "db_get_organization", lambda org_id: organization)
     with app.test_request_context("/"):
