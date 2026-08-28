@@ -137,12 +137,16 @@ class InventoryService:
             if product is None:
                 raise ValueError("Product not found in current organization")
             if batch_id is not None:
-                batch = ProductBatch.query.filter_by(
-                    id=int(batch_id),
-                    product_id=product_id,
-                    store_id=source_store_id,
-                    organization_id=organization_id,
-                ).with_for_update().first()
+                batch = (
+                    ProductBatch.query.filter_by(
+                        id=int(batch_id),
+                        product_id=product_id,
+                        store_id=source_store_id,
+                        organization_id=organization_id,
+                    )
+                    .with_for_update()
+                    .first()
+                )
                 if batch is None:
                     raise ValueError("Batch not found in source store")
                 if batch.expiry_date is not None:
@@ -205,21 +209,29 @@ class InventoryService:
                 db.session.flush()
             destination_stock.quantity += item.quantity
             if item.batch_id is not None:
-                source_batch = ProductBatch.query.filter_by(
-                    id=item.batch_id,
-                    product_id=item.product_id,
-                    store_id=transfer.source_store_id,
-                    organization_id=organization_id,
-                ).with_for_update().first()
+                source_batch = (
+                    ProductBatch.query.filter_by(
+                        id=item.batch_id,
+                        product_id=item.product_id,
+                        store_id=transfer.source_store_id,
+                        organization_id=organization_id,
+                    )
+                    .with_for_update()
+                    .first()
+                )
                 if source_batch is None or source_batch.quantity < item.quantity:
                     raise ValueError("Insufficient batch stock")
                 source_batch.quantity -= item.quantity
-                destination_batch = ProductBatch.query.filter_by(
-                    product_id=item.product_id,
-                    store_id=transfer.destination_store_id,
-                    batch_number=source_batch.batch_number,
-                    organization_id=organization_id,
-                ).with_for_update().first()
+                destination_batch = (
+                    ProductBatch.query.filter_by(
+                        product_id=item.product_id,
+                        store_id=transfer.destination_store_id,
+                        batch_number=source_batch.batch_number,
+                        organization_id=organization_id,
+                    )
+                    .with_for_update()
+                    .first()
+                )
                 if destination_batch is None:
                     destination_batch = ProductBatch(
                         organization_id=organization_id,
@@ -277,9 +289,7 @@ class InventoryService:
                     ProductBatch.expiry_date >= date.today(),
                 ),
             )
-            .order_by(
-                ProductBatch.expiry_date.asc().nullslast(), ProductBatch.id.asc()
-            )
+            .order_by(ProductBatch.expiry_date.asc().nullslast(), ProductBatch.id.asc())
             .with_for_update()
             .all()
         )
