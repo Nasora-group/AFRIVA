@@ -23,7 +23,16 @@ class InventoryService:
             raise ValueError("No current organization")
         return organization.id
 
-    def adjust_stock(self, product_id, store_id, quantity, movement_type="adjustment", reference_type=None, reference_id=None, note=None):
+    def adjust_stock(
+        self,
+        product_id,
+        store_id,
+        quantity,
+        movement_type="adjustment",
+        reference_type=None,
+        reference_id=None,
+        note=None,
+    ):
         organization_id = self._organization_id()
         if movement_type not in MOVEMENT_SIGN:
             raise ValueError("Unsupported movement type")
@@ -34,14 +43,24 @@ class InventoryService:
         if quantity <= 0:
             raise ValueError("quantity must be greater than zero")
 
-        product = Product.query.filter_by(id=product_id, organization_id=organization_id, active=True).first()
-        store = Store.query.filter_by(id=store_id, organization_id=organization_id, active=True).first()
+        product = Product.query.filter_by(
+            id=product_id, organization_id=organization_id, active=True
+        ).first()
+        store = Store.query.filter_by(
+            id=store_id, organization_id=organization_id, active=True
+        ).first()
         if product is None or store is None:
             raise ValueError("Product or store not found in current organization")
 
-        stock = ProductStock.query.filter_by(
-            product_id=product_id, store_id=store_id, organization_id=organization_id
-        ).with_for_update().first()
+        stock = (
+            ProductStock.query.filter_by(
+                product_id=product_id,
+                store_id=store_id,
+                organization_id=organization_id,
+            )
+            .with_for_update()
+            .first()
+        )
         if stock is None:
             stock = ProductStock(
                 organization_id=organization_id,
