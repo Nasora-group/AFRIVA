@@ -33,7 +33,7 @@ class Subscription(TenantAwareModel):
     started_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     trial_ends_at = db.Column(db.DateTime(timezone=True), nullable=True)
     current_period_start = db.Column(
-        db.DateTime(timezone=True), nullable=False, default=utcnow
+        db.DateTime(timezone=True), default=utcnow, nullable=False
     )
     current_period_end = db.Column(db.DateTime(timezone=True), nullable=False)
     canceled_at = db.Column(db.DateTime(timezone=True), nullable=True)
