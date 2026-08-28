@@ -20,9 +20,7 @@ class User(BaseModel):
 class OrganizationUser(BaseModel):
     __tablename__ = "organization_user"
     __table_args__ = (
-        db.UniqueConstraint(
-            "user_id", "organization_id", name="uq_user_organization"
-        ),
+        db.UniqueConstraint("user_id", "organization_id", name="uq_user_organization"),
     )
 
     user_id = db.Column(
