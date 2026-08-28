@@ -32,7 +32,10 @@ class PaymentService:
             reference=reference,
             status="confirmed",
         )
-        db.session.add(payment)
+        # sale.payments may already be loaded by the validation above. Keep
+        # that in-memory collection synchronized so refund_sale() sees the
+        # newly-created payment and can mark it refunded.
+        sale.payments.append(payment)
         db.session.flush()
         return payment
 
@@ -67,9 +70,7 @@ class PaymentService:
                 note="POS sale refund",
             )
 
-            # Restore the exact FEFO batches used by the original sale. This
-            # keeps batch stock and aggregate ProductStock consistent after a
-            # refund rather than returning units only to the aggregate stock.
+            # Restore the exact FEFO batches used by the original sale.
             for movement in movements_by_product.get(item.product_id, []):
                 prefix = "FEFO batch "
                 if not movement.note or not movement.note.startswith(prefix):
