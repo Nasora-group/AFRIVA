@@ -34,6 +34,9 @@ DROP POLICY IF EXISTS activity_log_tenant_isolation ON activity_log;
 CREATE POLICY activity_log_tenant_isolation ON activity_log
 USING (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::INTEGER)
 WITH CHECK (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::INTEGER);
+ALTER TABLE role FORCE ROW LEVEL SECURITY;
+ALTER TABLE organization_user FORCE ROW LEVEL SECURITY;
+ALTER TABLE activity_log FORCE ROW LEVEL SECURITY;
 """
 
 
@@ -50,12 +53,16 @@ def integration_app():
     with app.app_context():
         db.drop_all()
         db.create_all()
-        for statement in [s.strip() for s in RLS_SQL.split(";") if s.strip()]:
-            db.session.execute(text(statement))
-        db.session.commit()
         yield app
         db.session.remove()
         db.drop_all()
+
+
+def apply_rls():
+    """Enable and FORCE RLS only after test fixtures have been seeded."""
+    for statement in [s.strip() for s in RLS_SQL.split(";") if s.strip()]:
+        db.session.execute(text(statement))
+    db.session.commit()
 
 
 def test_real_database_tenant_isolation(integration_app):
@@ -79,6 +86,7 @@ def test_real_database_tenant_isolation(integration_app):
     ])
     db.session.commit()
 
+    apply_rls()
     db.session.execute(text("SET LOCAL app.current_organization_id = :org"), {"org": org_a.id})
     assert db.session.execute(
         text("SELECT count(*) FROM organization_user WHERE organization_id = :org"),
