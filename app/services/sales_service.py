@@ -3,8 +3,12 @@
 from decimal import Decimal
 
 from app.models import Product, Sale, SaleItem, SalesTarget, db
-from app.repositories.sales_repository import ProductRepository, SaleRepository, SalesTargetRepository
 from app.repositories.crm_repository import ClientRepository, CommercialRepository
+from app.repositories.sales_repository import (
+    ProductRepository,
+    SaleRepository,
+    SalesTargetRepository,
+)
 
 
 class SalesService:
@@ -36,7 +40,14 @@ class SalesService:
             if quantity <= 0 or unit_price < 0:
                 raise ValueError("Invalid quantity or unit price")
             line_total = quantity * unit_price
-            sale.items.append(SaleItem(product_id=product.id, quantity=quantity, unit_price=unit_price, line_total=line_total))
+            sale.items.append(
+                SaleItem(
+                    product_id=product.id,
+                    quantity=quantity,
+                    unit_price=unit_price,
+                    line_total=line_total,
+                )
+            )
             total += line_total
         sale.total_amount = total
         sale.organization_id = self.sales._organization_id()
@@ -50,7 +61,12 @@ class SalesService:
         if commercial_id is not None and self.commercials.get(commercial_id) is None:
             raise ValueError("Commercial not found in current organization")
         return self.targets.add(
-            SalesTarget(year=year, month=month, target_amount=Decimal(str(target_amount)), commercial_id=commercial_id)
+            SalesTarget(
+                year=year,
+                month=month,
+                target_amount=Decimal(str(target_amount)),
+                commercial_id=commercial_id,
+            )
         )
 
     def commit(self):
