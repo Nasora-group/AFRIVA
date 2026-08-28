@@ -277,7 +277,9 @@ class InventoryService:
                     ProductBatch.expiry_date >= date.today(),
                 ),
             )
-            .order_by(ProductBatch.expiry_date.asc().nullslast(), ProductBatch.id.asc())
+            .order_by(
+                ProductBatch.expiry_date.asc().nullslast(), ProductBatch.id.asc()
+            )
             .with_for_update()
             .all()
         )
