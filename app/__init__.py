@@ -1,4 +1,5 @@
 """AFRIVA Flask application factory."""
+
 from flask import Flask
 
 from .config import Config
@@ -12,6 +13,9 @@ def create_app(config_object=Config):
 
     from .auth import load_current_user
     from .middleware.tenant_middleware import load_tenant_context
+    from .api.crm import crm_api
+
+    app.register_blueprint(crm_api)
 
     @app.before_request
     def security_context():
