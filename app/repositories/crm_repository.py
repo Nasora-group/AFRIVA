@@ -1,7 +1,7 @@
 """Tenant-aware repositories for CRM entities."""
 
 from app.middleware.tenant_middleware import get_current_organization
-from app.models import Client, Commercial, Prospect, Prospection, Tour, Visit, db
+from app.models import Client, Commercial, Contact, Prospect, Prospection, Tour, TourStop, Visit, db
 
 
 class TenantRepository:
@@ -45,6 +45,10 @@ class ProspectRepository(TenantRepository):
     model = Prospect
 
 
+class ContactRepository(TenantRepository):
+    model = Contact
+
+
 class VisitRepository(TenantRepository):
     model = Visit
 
@@ -55,3 +59,7 @@ class ProspectionRepository(TenantRepository):
 
 class TourRepository(TenantRepository):
     model = Tour
+
+
+class TourStopRepository(TenantRepository):
+    model = TourStop
