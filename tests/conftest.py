@@ -82,20 +82,23 @@ def tenant_ids():
 
 @pytest.fixture
 def inventory_context(app, organization, tenant_context):
-    with app.app_context():
-        store = Store(
-            organization_id=organization.id,
-            name="Main Store",
-            code="MAIN",
-            active=True,
-        )
-        product = Product(
-            organization_id=organization.id,
-            name="Test Product",
-            sku="TEST-001",
-            unit_price=100,
-            active=True,
-        )
-        db.session.add_all([store, product])
-        db.session.commit()
-        yield organization, store, product
+    # tenant_context already provides the active Flask application/request
+    # context. Do not push a second app context here: Flask's `g` is scoped to
+    # the active app context, so a nested context would hide the tenant set by
+    # tenant_context and make service calls fail with 403.
+    store = Store(
+        organization_id=organization.id,
+        name="Main Store",
+        code="MAIN",
+        active=True,
+    )
+    product = Product(
+        organization_id=organization.id,
+        name="Test Product",
+        sku="TEST-001",
+        unit_price=100,
+        active=True,
+    )
+    db.session.add_all([store, product])
+    db.session.commit()
+    yield organization, store, product
