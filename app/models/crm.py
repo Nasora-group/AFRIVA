@@ -66,9 +66,7 @@ class Visit(TenantAwareModel):
         nullable=True,
         index=True,
     )
-    visited_at = db.Column(
-        db.DateTime(timezone=True), nullable=False, default=utcnow
-    )
+    visited_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     duration_minutes = db.Column(db.Integer)
     latitude = db.Column(db.Numeric(10, 7))
     longitude = db.Column(db.Numeric(10, 7))
