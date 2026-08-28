@@ -6,7 +6,7 @@ from .crm import Client, Commercial, Contact, Prospect, Prospection, Tour, TourS
 from .organization import Organization
 from .pos import CashRegister, CashSession, Store
 from .role import Permission, Role, role_permission
-from .sales import Product, Sale, SaleItem, SalesTarget
+from .sales import Payment, Product, Sale, SaleItem, SalesTarget
 from .user import OrganizationUser, User
 
 __all__ = [
@@ -31,6 +31,7 @@ __all__ = [
     "Product",
     "Sale",
     "SaleItem",
+    "Payment",
     "SalesTarget",
     "Store",
     "CashRegister",
