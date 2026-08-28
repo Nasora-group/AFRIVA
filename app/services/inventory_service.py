@@ -14,7 +14,6 @@ from app.models import (
     db,
 )
 
-
 MOVEMENT_SIGN = {
     "purchase": 1,
     "return": 1,
