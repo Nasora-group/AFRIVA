@@ -101,10 +101,14 @@ def test_real_database_tenant_isolation(integration_app):
     db.session.add_all([permission, role_a, role_b, user_a, user_b])
     db.session.flush()
     db.session.execute(
-        role_permission.insert().values(role_id=role_a.id, permission_id=permission.id)
+        role_permission.insert().values(
+            role_id=role_a.id, permission_id=permission.id
+        )
     )
     db.session.execute(
-        role_permission.insert().values(role_id=role_b.id, permission_id=permission.id)
+        role_permission.insert().values(
+            role_id=role_b.id, permission_id=permission.id
+        )
     )
     db.session.add_all(
         [
