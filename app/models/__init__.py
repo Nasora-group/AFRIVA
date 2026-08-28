@@ -3,6 +3,17 @@
 from .activity_log import ActivityLog
 from .base import BaseModel, TenantAwareModel, db
 from .billing import BillingPayment, Invoice, Plan, Subscription
+from .crm import (
+    Client,
+    Commercial,
+    Note,
+    Prospect,
+    Prospection,
+    Task,
+    Tour,
+    TourStop,
+    Visit,
+)
 from .organization import Organization
 from .role import Permission, Role, role_permission
 from .user import OrganizationUser, User
@@ -22,4 +33,13 @@ __all__ = [
     "Subscription",
     "Invoice",
     "BillingPayment",
+    "Commercial",
+    "Client",
+    "Prospect",
+    "Visit",
+    "Prospection",
+    "Tour",
+    "TourStop",
+    "Task",
+    "Note",
 ]
