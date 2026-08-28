@@ -5,7 +5,13 @@ from flask import Flask, g
 
 from app.api.pos import pos_api
 from app.api.sales_dashboard import sales_dashboard_api
-from app.models import Organization, User, db
+from app.models import (
+    Organization,
+    Product,
+    Store,
+    User,
+    db,
+)
 
 
 class TestConfig:
@@ -72,3 +78,24 @@ def tenant_context(app, organization):
 @pytest.fixture
 def tenant_ids():
     return {"org_a": 1, "org_b": 2}
+
+
+@pytest.fixture
+def inventory_context(app, organization, tenant_context):
+    with app.app_context():
+        store = Store(
+            organization_id=organization.id,
+            name="Main Store",
+            code="MAIN",
+            active=True,
+        )
+        product = Product(
+            organization_id=organization.id,
+            name="Test Product",
+            sku="TEST-001",
+            unit_price=100,
+            active=True,
+        )
+        db.session.add_all([store, product])
+        db.session.commit()
+        yield organization, store, product
