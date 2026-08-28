@@ -2,14 +2,7 @@
 
 from decimal import Decimal
 
-from app.models import (
-    Product,
-    Sale,
-    SaleItem,
-    SalesTarget,
-    StockMovement,
-    db,
-)
+from app.models import Product, Sale, SaleItem, SalesTarget, StockMovement, db
 from app.repositories.crm_repository import ClientRepository, CommercialRepository
 from app.repositories.sales_repository import (
     ProductRepository,
@@ -38,10 +31,8 @@ class SalesService:
             raise ValueError("Client not found in current organization")
         if not items:
             raise ValueError("At least one sale item is required")
-        store_id = data.get("store_id")
-        if store_id is None:
-            raise ValueError("store_id is required for stock-controlled sales")
 
+        store_id = data.get("store_id")
         organization_id = self.sales._organization_id()
         sale = Sale(
             commercial_id=commercial_id,
@@ -58,7 +49,10 @@ class SalesService:
             unit_price = Decimal(str(item.get("unit_price", product.unit_price)))
             if quantity <= 0 or unit_price < 0:
                 raise ValueError("Invalid quantity or unit price")
-            allocations = self.inventory.consume_fefo(product.id, store_id, quantity)
+            if store_id is not None:
+                allocations = self.inventory.consume_fefo(product.id, store_id, quantity)
+            else:
+                allocations = []
             line_total = quantity * unit_price
             sale.items.append(
                 SaleItem(
