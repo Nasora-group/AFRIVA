@@ -276,6 +276,31 @@ class InventoryService:
             .with_for_update()
             .all()
         )
+        available = sum((Decimal(str(batch.quantity)) for batch in batches), Decimal("0"))
+        if available < quantity:
+            raise ValueError("Insufficient non-expired batch stock")
+
+        stock = (
+            ProductStock.query.filter_by(
+                product_id=product_id,
+                store_id=store_id,
+                organization_id=organization_id,
+            )
+            .with_for_update()
+            .first()
+        )
+        if stock is None:
+            stock = ProductStock(
+                organization_id=organization_id,
+                product_id=product_id,
+                store_id=store_id,
+                quantity=available,
+            )
+            db.session.add(stock)
+            db.session.flush()
+        if Decimal(str(stock.quantity)) < quantity:
+            raise ValueError("Insufficient stock")
+
         remaining = quantity
         allocations = []
         for batch in batches:
@@ -285,6 +310,5 @@ class InventoryService:
             batch.quantity -= taken
             remaining -= taken
             allocations.append({"batch_id": batch.id, "quantity": taken})
-        if remaining > 0:
-            raise ValueError("Insufficient non-expired batch stock")
+        stock.quantity -= quantity
         return allocations
