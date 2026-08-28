@@ -132,11 +132,11 @@ def test_record_partial_then_full_payment_marks_invoice_paid(app, tenant):
         invoice.id, "4000", provider="wave", provider_reference="P1"
     )
     assert first.status == "succeeded"
-    assert Invoice.query.get(invoice.id).status == "open"
+    assert db.session.get(Invoice, invoice.id).status == "open"
     service.record_payment(
         invoice.id, "6000", provider="wave", provider_reference="P2"
     )
-    paid = Invoice.query.get(invoice.id)
+    paid = db.session.get(Invoice, invoice.id)
     assert paid.status == "paid"
     assert paid.paid_at is not None
     assert BillingPayment.query.filter_by(invoice_id=invoice.id).count() == 2
