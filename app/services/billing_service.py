@@ -127,9 +127,7 @@ class BillingService:
             organization_id=organization_id,
             status="succeeded",
         ).all()
-        paid_total = sum(
-            (Decimal(str(item.amount)) for item in payments), Decimal("0")
-        )
+        paid_total = sum((Decimal(str(item.amount)) for item in payments), Decimal("0"))
         if paid_total >= Decimal(str(invoice.amount)):
             invoice.status = "paid"
             invoice.paid_at = payment.paid_at
