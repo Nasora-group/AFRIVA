@@ -66,3 +66,5 @@ class CashSession(TenantAwareModel):
     status = db.Column(db.String(30), nullable=False, default="open", index=True)
 
     register = db.relationship("CashRegister", back_populates="sessions")
+    sales = db.relationship("Sale", back_populates="cash_session")
+    payments = db.relationship("Payment", back_populates="cash_session")
