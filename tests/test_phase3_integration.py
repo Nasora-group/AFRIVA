@@ -1,10 +1,14 @@
 """Real PostgreSQL Phase 3 tenant-isolation test.
 
-Only TEST_DATABASE_URL is used. Never point it at production.
+The schema and fixtures are created with the database owner, then the actual
+RLS assertion is executed through a separate non-owner application role.
+Only TEST_DATABASE_URL is used; production is never touched.
 """
 import os
+from urllib.parse import urlparse
 
 import pytest
+import psycopg2
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 
@@ -16,7 +20,6 @@ pytestmark = pytest.mark.skipif(
     not os.getenv("TEST_DATABASE_URL"),
     reason="TEST_DATABASE_URL is required for PostgreSQL integration tests",
 )
-
 
 RLS_SQL = """
 ALTER TABLE role ENABLE ROW LEVEL SECURITY;
@@ -40,12 +43,24 @@ ALTER TABLE activity_log FORCE ROW LEVEL SECURITY;
 """
 
 
+def owner_connection_url():
+    return os.environ["TEST_DATABASE_URL"]
+
+
+def app_connection_url():
+    parsed = urlparse(owner_connection_url())
+    return (
+        f"dbname={parsed.path.lstrip('/')} host={parsed.hostname} "
+        f"port={parsed.port or 5432} user=afriva_app password=afriva_app_test"
+    )
+
+
 @pytest.fixture
 def integration_app():
     class TestConfig:
         TESTING = True
         SECRET_KEY = "integration-only-secret"
-        SQLALCHEMY_DATABASE_URI = os.environ["TEST_DATABASE_URL"]
+        SQLALCHEMY_DATABASE_URI = owner_connection_url()
         SQLALCHEMY_TRACK_MODIFICATIONS = False
         SESSION_COOKIE_SECURE = False
 
@@ -58,10 +73,12 @@ def integration_app():
         db.drop_all()
 
 
-def apply_rls():
-    """Enable and FORCE RLS only after test fixtures have been seeded."""
+def prepare_rls_and_grants():
+    """Configure RLS as owner and grant only application-level table access."""
     for statement in [s.strip() for s in RLS_SQL.split(";") if s.strip()]:
         db.session.execute(text(statement))
+    for table in ("organization_user", "role", "activity_log"):
+        db.session.execute(text(f"GRANT SELECT ON TABLE {table} TO afriva_app"))
     db.session.commit()
 
 
@@ -86,13 +103,22 @@ def test_real_database_tenant_isolation(integration_app):
     ])
     db.session.commit()
 
-    apply_rls()
-    db.session.execute(text("SET LOCAL app.current_organization_id = :org"), {"org": org_a.id})
-    assert db.session.execute(
-        text("SELECT count(*) FROM organization_user WHERE organization_id = :org"),
-        {"org": org_a.id},
-    ).scalar_one() == 1
-    assert db.session.execute(
-        text("SELECT count(*) FROM organization_user WHERE organization_id = :org"),
-        {"org": org_b.id},
-    ).scalar_one() == 0
+    prepare_rls_and_grants()
+
+    # This connection is deliberately NOT the database owner.
+    with psycopg2.connect(app_connection_url()) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT set_config('app.current_organization_id', %s, false)",
+                (str(org_a.id),),
+            )
+            cursor.execute(
+                "SELECT count(*) FROM organization_user WHERE organization_id = %s",
+                (org_a.id,),
+            )
+            assert cursor.fetchone()[0] == 1
+            cursor.execute(
+                "SELECT count(*) FROM organization_user WHERE organization_id = %s",
+                (org_b.id,),
+            )
+            assert cursor.fetchone()[0] == 0
