@@ -4,6 +4,7 @@ from .activity_log import ActivityLog
 from .base import BaseModel, TenantAwareModel, db
 from .crm import Client, Commercial, Contact, Prospect, Prospection, Tour, TourStop, Visit
 from .organization import Organization
+from .pos import CashRegister, CashSession, Store
 from .role import Permission, Role, role_permission
 from .sales import Product, Sale, SaleItem, SalesTarget
 from .user import OrganizationUser, User
@@ -31,4 +32,7 @@ __all__ = [
     "Sale",
     "SaleItem",
     "SalesTarget",
+    "Store",
+    "CashRegister",
+    "CashSession",
 ]
