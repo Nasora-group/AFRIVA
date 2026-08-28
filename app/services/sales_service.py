@@ -29,7 +29,14 @@ class SalesService:
             raise ValueError("Client not found in current organization")
         if not items:
             raise ValueError("At least one sale item is required")
-        sale = Sale(commercial_id=commercial_id, client_id=client_id, **data)
+
+        organization_id = self.sales._organization_id()
+        sale = Sale(
+            commercial_id=commercial_id,
+            client_id=client_id,
+            organization_id=organization_id,
+            **data,
+        )
         total = Decimal("0.00")
         for item in items:
             product = self.products.get(item["product_id"])
@@ -46,11 +53,11 @@ class SalesService:
                     quantity=quantity,
                     unit_price=unit_price,
                     line_total=line_total,
+                    organization_id=organization_id,
                 )
             )
             total += line_total
         sale.total_amount = total
-        sale.organization_id = self.sales._organization_id()
         db.session.add(sale)
         db.session.flush()
         return sale
