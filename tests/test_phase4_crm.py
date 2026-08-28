@@ -9,8 +9,6 @@ from app.models import (
     Organization,
     Prospect,
     Prospection,
-    Role,
-    User,
     Visit,
     db,
 )
