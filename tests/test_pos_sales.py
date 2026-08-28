@@ -70,7 +70,7 @@ def test_pos_checkout_creates_sale_lines_and_payment(app, monkeypatch):
                 {"product_id": product.id, "quantity": 1, "unit_price": "500.00"},
             ],
             "payments": [
-                {"method": "cash", "amount": "3500.00"},
+                {"method": "cash", "amount": "2000.00"},
                 {"method": "mobile_money", "amount": "1500.00", "reference": "TX-01"},
             ],
         },
@@ -89,7 +89,7 @@ def test_pos_checkout_creates_sale_lines_and_payment(app, monkeypatch):
         assert sale.cash_session_id == session_id
         assert len(sale.items) == 2
         assert len(sale.payments) == 2
-        assert sum((p.amount for p in sale.payments), Decimal("0.00")) == Decimal("5000.00")
+        assert sum((p.amount for p in sale.payments), Decimal("0.00")) == Decimal("3500.00")
 
 
 def test_pos_checkout_rejects_payment_mismatch_and_rolls_back(app, monkeypatch):
