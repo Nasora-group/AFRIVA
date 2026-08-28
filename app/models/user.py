@@ -1,5 +1,6 @@
 """Global users and tenant memberships."""
-from .base import db, BaseModel
+
+from .base import BaseModel, db
 
 
 class User(BaseModel):
@@ -19,11 +20,16 @@ class User(BaseModel):
 class OrganizationUser(BaseModel):
     __tablename__ = "organization_user"
     __table_args__ = (
-        db.UniqueConstraint("user_id", "organization_id", name="uq_user_organization"),
+        db.UniqueConstraint(
+            "user_id", "organization_id", name="uq_user_organization"
+        ),
     )
 
     user_id = db.Column(
-        db.Integer, db.ForeignKey("user.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("user.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     organization_id = db.Column(
         db.Integer,
@@ -31,9 +37,15 @@ class OrganizationUser(BaseModel):
         nullable=False,
         index=True,
     )
-    role_id = db.Column(db.Integer, db.ForeignKey("role.id", ondelete="RESTRICT"), nullable=False)
+    role_id = db.Column(
+        db.Integer,
+        db.ForeignKey("role.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
     status = db.Column(db.String(50), default="active", nullable=False, index=True)
 
     user = db.relationship("User", back_populates="organization_users")
-    organization = db.relationship("Organization", backref=db.backref("memberships", lazy=True))
+    organization = db.relationship(
+        "Organization", backref=db.backref("memberships", lazy=True)
+    )
     role = db.relationship("Role", back_populates="memberships")
