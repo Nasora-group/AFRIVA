@@ -1,4 +1,5 @@
 """Tenant-aware repository primitives."""
+
 from app.models.base import db
 
 
@@ -36,6 +37,7 @@ class BaseRepository:
         if entity is None:
             return None
         from app.models.base import utcnow
+
         entity.deleted_at = utcnow()
         db.session.flush()
         return entity
