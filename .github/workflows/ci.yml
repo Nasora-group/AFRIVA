@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - 'phase4/**'
+  workflow_dispatch:
 
 jobs:
   test-and-lint:
