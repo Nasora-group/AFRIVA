@@ -3,7 +3,6 @@
 from collections import defaultdict
 from decimal import Decimal
 
-from app.models import SalesTarget
 from app.repositories.sales_repository import SaleRepository, SalesTargetRepository
 
 
