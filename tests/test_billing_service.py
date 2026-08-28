@@ -1,4 +1,4 @@
-"""Unit tests for SaaS billing rules that do not require a production database."""
+"""Unit tests for SaaS billing rules."""
 
 from datetime import datetime, timezone
 
@@ -24,3 +24,11 @@ def test_period_end_yearly():
 def test_period_end_rejects_unknown_interval():
     with pytest.raises(ValueError, match="Unsupported billing interval"):
         BillingService._period_end(datetime.now(timezone.utc), "weekly")
+
+
+def test_organization_id_requires_tenant_context(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.billing_service.get_current_organization", lambda: None
+    )
+    with pytest.raises(ValueError, match="No current organization"):
+        BillingService()._organization_id()
