@@ -3,8 +3,7 @@
 from datetime import date
 
 from app.api.crm import crm_api
-from app.models import Client, Commercial, Contact, Organization, Prospect, Tour, db
-from app.repositories.crm_repository import ClientRepository
+from app.models import Commercial, Client, Organization, Prospect, Tour, db
 
 
 def _set_tenant(monkeypatch, org):
@@ -35,7 +34,9 @@ def test_client_api_create_and_list(app, monkeypatch):
     with app.app_context():
         _tenant_data(app, monkeypatch)
         client = app.test_client()
-        response = client.post("/api/v1/crm/clients", json={"name": "Pharmacie A", "phone": "770000000"})
+        response = client.post(
+            "/api/v1/crm/clients", json={"name": "Pharmacie A", "phone": "770000000"}
+        )
         assert response.status_code == 201
         response = client.get("/api/v1/crm/clients?limit=1&offset=0")
         assert response.status_code == 200
@@ -82,7 +83,9 @@ def test_contact_api_create_and_list(app, monkeypatch):
 def test_contact_api_requires_name(app):
     _register(app)
     with app.app_context():
-        response = app.test_client().post("/api/v1/crm/contacts", json={"first_name": "Awa"})
+        response = app.test_client().post(
+            "/api/v1/crm/contacts", json={"first_name": "Awa"}
+        )
         assert response.status_code == 400
 
 
@@ -98,7 +101,8 @@ def test_contact_api_rejects_foreign_client(app, monkeypatch):
         db.session.commit()
         _set_tenant(monkeypatch, org_a)
         response = app.test_client().post(
-            "/api/v1/crm/contacts", json={"first_name": "X", "last_name": "Y", "client_id": foreign.id}
+            "/api/v1/crm/contacts",
+            json={"first_name": "X", "last_name": "Y", "client_id": foreign.id},
         )
         assert response.status_code == 404
 
@@ -108,7 +112,10 @@ def test_tour_api_create_and_list(app, monkeypatch):
     with app.app_context():
         _, commercial, _, _ = _tenant_data(app, monkeypatch)
         client = app.test_client()
-        response = client.post("/api/v1/crm/tours", json={"name": "Tour Dakar", "commercial_id": commercial.id})
+        response = client.post(
+            "/api/v1/crm/tours",
+            json={"name": "Tour Dakar", "commercial_id": commercial.id},
+        )
         assert response.status_code == 201
         response = client.get("/api/v1/crm/tours")
         assert response.status_code == 200
@@ -126,7 +133,9 @@ def test_tour_api_rejects_foreign_commercial(app, monkeypatch):
         db.session.add(foreign)
         db.session.commit()
         _set_tenant(monkeypatch, org_a)
-        response = app.test_client().post("/api/v1/crm/tours", json={"name": "X", "commercial_id": foreign.id})
+        response = app.test_client().post(
+            "/api/v1/crm/tours", json={"name": "X", "commercial_id": foreign.id}
+        )
         assert response.status_code == 404
 
 
@@ -134,10 +143,17 @@ def test_tour_stop_requires_target(app, monkeypatch):
     _register(app)
     with app.app_context():
         _, commercial, _, _ = _tenant_data(app, monkeypatch)
-        tour = Tour(name="Tour B", commercial_id=commercial.id, organization_id=commercial.organization_id, tour_date=date.today())
+        tour = Tour(
+            name="Tour B",
+            commercial_id=commercial.id,
+            organization_id=commercial.organization_id,
+            tour_date=date.today(),
+        )
         db.session.add(tour)
         db.session.commit()
-        response = app.test_client().post(f"/api/v1/crm/tours/{tour.id}/stops", json={"sequence": 1})
+        response = app.test_client().post(
+            f"/api/v1/crm/tours/{tour.id}/stops", json={"sequence": 1}
+        )
         assert response.status_code == 400
 
 
@@ -145,11 +161,17 @@ def test_tour_stop_create_for_client(app, monkeypatch):
     _register(app)
     with app.app_context():
         _, commercial, client_row, _ = _tenant_data(app, monkeypatch)
-        tour = Tour(name="Tour C", commercial_id=commercial.id, organization_id=commercial.organization_id, tour_date=date.today())
+        tour = Tour(
+            name="Tour C",
+            commercial_id=commercial.id,
+            organization_id=commercial.organization_id,
+            tour_date=date.today(),
+        )
         db.session.add(tour)
         db.session.commit()
         response = app.test_client().post(
-            f"/api/v1/crm/tours/{tour.id}/stops", json={"sequence": 1, "client_id": client_row.id}
+            f"/api/v1/crm/tours/{tour.id}/stops",
+            json={"sequence": 1, "client_id": client_row.id},
         )
         assert response.status_code == 201
 
@@ -166,7 +188,8 @@ def test_visit_create_and_foreign_validation(app, monkeypatch):
     with app.app_context():
         _, commercial, client_row, prospect = _tenant_data(app, monkeypatch)
         response = app.test_client().post(
-            "/api/v1/crm/visits", json={"commercial_id": commercial.id, "client_id": client_row.id, "notes": "OK"}
+            "/api/v1/crm/visits",
+            json={"commercial_id": commercial.id, "client_id": client_row.id, "notes": "OK"},
         )
         assert response.status_code == 201
         org_b = Organization(name="Foreign", slug="foreign")
@@ -176,7 +199,8 @@ def test_visit_create_and_foreign_validation(app, monkeypatch):
         db.session.add(foreign)
         db.session.commit()
         response = app.test_client().post(
-            "/api/v1/crm/visits", json={"commercial_id": commercial.id, "client_id": foreign.id}
+            "/api/v1/crm/visits",
+            json={"commercial_id": commercial.id, "client_id": foreign.id},
         )
         assert response.status_code == 404
         assert prospect.id > 0
@@ -187,7 +211,8 @@ def test_prospection_create_and_validation(app, monkeypatch):
     with app.app_context():
         _, commercial, _, prospect = _tenant_data(app, monkeypatch)
         response = app.test_client().post(
-            "/api/v1/crm/prospections", json={"commercial_id": commercial.id, "prospect_id": prospect.id}
+            "/api/v1/crm/prospections",
+            json={"commercial_id": commercial.id, "prospect_id": prospect.id},
         )
         assert response.status_code == 201
         response = app.test_client().post("/api/v1/crm/prospections", json={})
