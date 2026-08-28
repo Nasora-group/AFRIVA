@@ -14,14 +14,7 @@ from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 
 from app import create_app
-from app.models import (
-    Organization,
-    OrganizationUser,
-    Permission,
-    Role,
-    User,
-    db,
-)
+from app.models import Organization, OrganizationUser, Permission, Role, User, db
 from app.models.role import role_permission
 
 pytestmark = pytest.mark.skipif(
@@ -86,9 +79,7 @@ def prepare_rls_and_grants():
     for statement in [s.strip() for s in RLS_SQL.split(";") if s.strip()]:
         db.session.execute(text(statement))
     for table in ("organization_user", "role", "activity_log"):
-        db.session.execute(
-            text(f"GRANT SELECT ON TABLE {table} TO afriva_app")
-        )
+        db.session.execute(text(f"GRANT SELECT ON TABLE {table} TO afriva_app"))
     db.session.commit()
 
 
@@ -110,14 +101,10 @@ def test_real_database_tenant_isolation(integration_app):
     db.session.add_all([permission, role_a, role_b, user_a, user_b])
     db.session.flush()
     db.session.execute(
-        role_permission.insert().values(
-            role_id=role_a.id, permission_id=permission.id
-        )
+        role_permission.insert().values(role_id=role_a.id, permission_id=permission.id)
     )
     db.session.execute(
-        role_permission.insert().values(
-            role_id=role_b.id, permission_id=permission.id
-        )
+        role_permission.insert().values(role_id=role_b.id, permission_id=permission.id)
     )
     db.session.add_all(
         [
