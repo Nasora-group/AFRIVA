@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.models import Client, Commercial, Product, Sale, SalesTarget, db
+from app.models import Commercial, Product, Sale, SalesTarget, db
 from app.services.sales import SalesValidationError, create_sale, set_sales_target
 
 
