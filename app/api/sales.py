@@ -22,7 +22,17 @@ def _pagination():
 def products():
     limit, offset = _pagination()
     rows = _service().products.list(limit=limit, offset=offset)
-    return jsonify({"data": [{"id": r.id, "name": r.name, "sku": r.sku, "unit_price": str(r.unit_price), "active": r.active} for r in rows]})
+    data = [
+        {
+            "id": r.id,
+            "name": r.name,
+            "sku": r.sku,
+            "unit_price": str(r.unit_price),
+            "active": r.active,
+        }
+        for r in rows
+    ]
+    return jsonify({"data": data})
 
 
 @sales_api.post("/products")
@@ -34,7 +44,12 @@ def create_product():
         price = float(payload.get("unit_price", 0))
         if price < 0:
             raise ValueError
-        row = _service().create_product(name=payload["name"], sku=payload.get("sku"), unit_price=price, active=payload.get("active", True))
+        row = _service().create_product(
+            name=payload["name"],
+            sku=payload.get("sku"),
+            unit_price=price,
+            active=payload.get("active", True),
+        )
         db.session.commit()
     except ValueError:
         db.session.rollback()
@@ -46,7 +61,13 @@ def create_product():
 def create_sale():
     payload = request.get_json(silent=True) or {}
     try:
-        row = _service().create_sale(items=payload.get("items", []), commercial_id=payload.get("commercial_id"), client_id=payload.get("client_id"), sale_date=payload.get("sale_date"), status=payload.get("status", "confirmed"))
+        row = _service().create_sale(
+            items=payload.get("items", []),
+            commercial_id=payload.get("commercial_id"),
+            client_id=payload.get("client_id"),
+            sale_date=payload.get("sale_date"),
+            status=payload.get("status", "confirmed"),
+        )
         db.session.commit()
     except ValueError as exc:
         db.session.rollback()
@@ -58,14 +79,30 @@ def create_sale():
 def sales():
     limit, offset = _pagination()
     rows = _service().sales.list(limit=limit, offset=offset)
-    return jsonify({"data": [{"id": r.id, "sale_date": r.sale_date.isoformat(), "status": r.status, "total_amount": str(r.total_amount), "commercial_id": r.commercial_id, "client_id": r.client_id} for r in rows]})
+    data = [
+        {
+            "id": r.id,
+            "sale_date": r.sale_date.isoformat(),
+            "status": r.status,
+            "total_amount": str(r.total_amount),
+            "commercial_id": r.commercial_id,
+            "client_id": r.client_id,
+        }
+        for r in rows
+    ]
+    return jsonify({"data": data})
 
 
 @sales_api.post("/targets")
 def create_target():
     payload = request.get_json(silent=True) or {}
     try:
-        row = _service().set_target(year=int(payload["year"]), month=int(payload["month"]), target_amount=payload["target_amount"], commercial_id=payload.get("commercial_id"))
+        row = _service().set_target(
+            year=int(payload["year"]),
+            month=int(payload["month"]),
+            target_amount=payload["target_amount"],
+            commercial_id=payload.get("commercial_id"),
+        )
         db.session.commit()
     except (KeyError, ValueError) as exc:
         db.session.rollback()
@@ -79,5 +116,17 @@ def targets():
     month = request.args.get("month", type=int)
     if year is None or month is None:
         return jsonify({"error": "year and month are required"}), 400
-    rows = _service().targets.for_period(year, month, request.args.get("commercial_id", type=int))
-    return jsonify({"data": [{"id": r.id, "year": r.year, "month": r.month, "target_amount": str(r.target_amount), "commercial_id": r.commercial_id} for r in rows]})
+    rows = _service().targets.for_period(
+        year, month, request.args.get("commercial_id", type=int)
+    )
+    data = [
+        {
+            "id": r.id,
+            "year": r.year,
+            "month": r.month,
+            "target_amount": str(r.target_amount),
+            "commercial_id": r.commercial_id,
+        }
+        for r in rows
+    ]
+    return jsonify({"data": data})
