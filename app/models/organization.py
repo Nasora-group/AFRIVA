@@ -1,5 +1,6 @@
 """Tenant organization model."""
-from .base import db, BaseModel
+
+from .base import BaseModel, db
 
 
 class Organization(BaseModel):
