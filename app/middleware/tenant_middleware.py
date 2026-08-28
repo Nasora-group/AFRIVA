@@ -1,4 +1,5 @@
 """Server-side tenant context. Never trust organization_id from request input."""
+
 from flask import abort, g, session
 
 from app.models.organization import Organization
