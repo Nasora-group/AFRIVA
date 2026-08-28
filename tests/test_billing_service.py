@@ -133,9 +133,7 @@ def test_record_partial_then_full_payment_marks_invoice_paid(app, tenant):
     )
     assert first.status == "succeeded"
     assert db.session.get(Invoice, invoice.id).status == "open"
-    service.record_payment(
-        invoice.id, "6000", provider="wave", provider_reference="P2"
-    )
+    service.record_payment(invoice.id, "6000", provider="wave", provider_reference="P2")
     paid = db.session.get(Invoice, invoice.id)
     assert paid.status == "paid"
     assert paid.paid_at is not None
