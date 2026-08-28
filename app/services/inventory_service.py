@@ -100,7 +100,9 @@ class InventoryService:
         db.session.flush()
         return stock, movement
 
-    def create_transfer(self, source_store_id, destination_store_id, items, reference=None, note=None):
+    def create_transfer(
+        self, source_store_id, destination_store_id, items, reference=None, note=None
+    ):
         organization_id = self._organization_id()
         if source_store_id == destination_store_id:
             raise ValueError("Source and destination stores must differ")
@@ -143,6 +145,7 @@ class InventoryService:
                     raise ValueError("Batch not found in source store")
                 if batch.expiry_date is not None:
                     from datetime import date
+
                     if batch.expiry_date < date.today():
                         raise ValueError("Expired batch cannot be transferred")
                 if Decimal(str(batch.quantity)) < quantity:
@@ -224,26 +227,28 @@ class InventoryService:
                     db.session.add(destination_batch)
                     db.session.flush()
                 destination_batch.quantity += item.quantity
-            db.session.add_all([
-                StockMovement(
-                    organization_id=organization_id,
-                    product_id=item.product_id,
-                    store_id=transfer.source_store_id,
-                    movement_type="transfer_out",
-                    quantity=-item.quantity,
-                    reference_type="stock_transfer",
-                    reference_id=transfer.id,
-                ),
-                StockMovement(
-                    organization_id=organization_id,
-                    product_id=item.product_id,
-                    store_id=transfer.destination_store_id,
-                    movement_type="transfer_in",
-                    quantity=item.quantity,
-                    reference_type="stock_transfer",
-                    reference_id=transfer.id,
-                ),
-            ])
+            db.session.add_all(
+                [
+                    StockMovement(
+                        organization_id=organization_id,
+                        product_id=item.product_id,
+                        store_id=transfer.source_store_id,
+                        movement_type="transfer_out",
+                        quantity=-item.quantity,
+                        reference_type="stock_transfer",
+                        reference_id=transfer.id,
+                    ),
+                    StockMovement(
+                        organization_id=organization_id,
+                        product_id=item.product_id,
+                        store_id=transfer.destination_store_id,
+                        movement_type="transfer_in",
+                        quantity=item.quantity,
+                        reference_type="stock_transfer",
+                        reference_id=transfer.id,
+                    ),
+                ]
+            )
         transfer.status = "completed"
         db.session.flush()
         return transfer
@@ -255,13 +260,17 @@ class InventoryService:
             id=product_id, organization_id=organization_id, active=True
         ).first_or_404()
         from datetime import date
+
         batches = (
             ProductBatch.query.filter(
                 ProductBatch.product_id == product_id,
                 ProductBatch.store_id == store_id,
                 ProductBatch.organization_id == organization_id,
                 ProductBatch.quantity > 0,
-                db.or_(ProductBatch.expiry_date.is_(None), ProductBatch.expiry_date >= date.today()),
+                db.or_(
+                    ProductBatch.expiry_date.is_(None),
+                    ProductBatch.expiry_date >= date.today(),
+                ),
             )
             .order_by(ProductBatch.expiry_date.asc().nullslast(), ProductBatch.id.asc())
             .with_for_update()
