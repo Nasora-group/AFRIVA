@@ -3,6 +3,7 @@
 from .activity_log import ActivityLog
 from .base import BaseModel, TenantAwareModel, db
 from .crm import Client, Commercial, Contact, Prospect, Prospection, Tour, TourStop, Visit
+from .inventory import ProductBatch, ProductCategory, ProductStock, StockMovement
 from .organization import Organization
 from .pos import CashRegister, CashSession, Store
 from .role import Permission, Role, role_permission
@@ -36,4 +37,8 @@ __all__ = [
     "Store",
     "CashRegister",
     "CashSession",
+    "ProductCategory",
+    "ProductStock",
+    "StockMovement",
+    "ProductBatch",
 ]
