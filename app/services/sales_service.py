@@ -2,13 +2,14 @@
 
 from decimal import Decimal
 
-from app.models import Product, Sale, SaleItem, SalesTarget, db
+from app.models import Product, Sale, SaleItem, SalesTarget, StockMovement, db
 from app.repositories.crm_repository import ClientRepository, CommercialRepository
 from app.repositories.sales_repository import (
     ProductRepository,
     SaleRepository,
     SalesTargetRepository,
 )
+from app.services.inventory_service import InventoryService
 
 
 class SalesService:
@@ -18,6 +19,7 @@ class SalesService:
         self.targets = SalesTargetRepository()
         self.clients = ClientRepository()
         self.commercials = CommercialRepository()
+        self.inventory = InventoryService()
 
     def create_product(self, **data):
         return self.products.add(Product(**data))
@@ -30,6 +32,7 @@ class SalesService:
         if not items:
             raise ValueError("At least one sale item is required")
 
+        store_id = data.get("store_id")
         organization_id = self.sales._organization_id()
         sale = Sale(
             commercial_id=commercial_id,
@@ -38,6 +41,7 @@ class SalesService:
             **data,
         )
         total = Decimal("0.00")
+        allocations_by_item = []
         for item in items:
             product = self.products.get(item["product_id"])
             if product is None:
@@ -46,6 +50,11 @@ class SalesService:
             unit_price = Decimal(str(item.get("unit_price", product.unit_price)))
             if quantity <= 0 or unit_price < 0:
                 raise ValueError("Invalid quantity or unit price")
+            allocations = (
+                self.inventory.consume_fefo(product.id, store_id, quantity)
+                if store_id is not None
+                else []
+            )
             line_total = quantity * unit_price
             sale.items.append(
                 SaleItem(
@@ -57,8 +66,29 @@ class SalesService:
                 )
             )
             total += line_total
+            allocations_by_item.append((product.id, allocations))
+
         sale.total_amount = total
         db.session.add(sale)
+        # Persist the sale first so every stock movement can reference its
+        # stable primary key. Previously movements were flushed with a NULL
+        # reference_id and were no longer present in db.session.new.
+        db.session.flush()
+
+        for product_id, allocations in allocations_by_item:
+            for allocation in allocations:
+                db.session.add(
+                    StockMovement(
+                        organization_id=organization_id,
+                        product_id=product_id,
+                        store_id=store_id,
+                        movement_type="sale",
+                        quantity=-allocation["quantity"],
+                        reference_type="sale",
+                        reference_id=sale.id,
+                        note=f"FEFO batch {allocation['batch_id']}",
+                    )
+                )
         db.session.flush()
         return sale
 
