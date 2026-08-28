@@ -26,12 +26,16 @@ class SalesDashboardService:
                 by_commercial[row.commercial_id] += row.total_amount
 
         target = Decimal("0.00")
-        for row in self.targets.query().filter(
-            SalesTarget.year >= start_date.year,
-            SalesTarget.year <= end_date.year,
-        ).all():
-            if commercial_id is None or row.commercial_id in (None, commercial_id):
-                target += row.target_amount
+        current = start_date.replace(day=1)
+        last_month = end_date.replace(day=1)
+        while current <= last_month:
+            for row in self.targets.for_period(current.year, current.month):
+                if commercial_id is None or row.commercial_id in (None, commercial_id):
+                    target += row.target_amount
+            if current.month == 12:
+                current = current.replace(year=current.year + 1, month=1)
+            else:
+                current = current.replace(month=current.month + 1)
 
         attainment = (revenue / target * Decimal("100")) if target else Decimal("0.00")
         return {
