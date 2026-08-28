@@ -41,7 +41,6 @@ Jinja2==3.1.2
 twilio==8.10.0
 
 # Paiements
-# 5.15.0 n'existe pas sur PyPI; 5.1.1 est la dernière release 5.x stable disponible.
 stripe==5.1.1
 paypalrestsdk==1.7.1
 
@@ -76,7 +75,7 @@ plotly==5.15.0
 flask-swagger-ui==4.11.1
 
 # Utilitaires
-python-dateutil==2.8.2
+python-dateutil==2.8.0
 pytz==2023.3
 requests==2.31.0
 click==8.1.3
@@ -108,7 +107,7 @@ flask-debugtoolbar==0.14.1
 # Miscellaneous
 python-slugify==8.0.0
 tenacity==8.2.3
-uuid6==1.0.3
+uuid6==2025.0.1
 
 # Development
 ipython==8.14.0
