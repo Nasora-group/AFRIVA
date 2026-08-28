@@ -92,36 +92,20 @@ def test_real_database_tenant_isolation(integration_app):
     permission = Permission(name="clients.view")
     role_a = Role(name="Admin A", organization_id=org_a.id)
     role_b = Role(name="Admin B", organization_id=org_b.id)
-    user_a = User(
-        email="a@example.test", password_hash=generate_password_hash("secret")
-    )
-    user_b = User(
-        email="b@example.test", password_hash=generate_password_hash("secret")
-    )
+    user_a = User(email="a@example.test", password_hash=generate_password_hash("secret"))
+    user_b = User(email="b@example.test", password_hash=generate_password_hash("secret"))
     db.session.add_all([permission, role_a, role_b, user_a, user_b])
     db.session.flush()
     db.session.execute(
-        role_permission.insert().values(
-            role_id=role_a.id, permission_id=permission.id
-        )
+        role_permission.insert().values(role_id=role_a.id, permission_id=permission.id)
     )
     db.session.execute(
-        role_permission.insert().values(
-            role_id=role_b.id, permission_id=permission.id
-        )
+        role_permission.insert().values(role_id=role_b.id, permission_id=permission.id)
     )
     db.session.add_all(
         [
-            OrganizationUser(
-                user_id=user_a.id,
-                organization_id=org_a.id,
-                role_id=role_a.id,
-            ),
-            OrganizationUser(
-                user_id=user_b.id,
-                organization_id=org_b.id,
-                role_id=role_b.id,
-            ),
+            OrganizationUser(user_id=user_a.id, organization_id=org_a.id, role_id=role_a.id),
+            OrganizationUser(user_id=user_b.id, organization_id=org_b.id, role_id=role_b.id),
         ]
     )
     db.session.commit()
