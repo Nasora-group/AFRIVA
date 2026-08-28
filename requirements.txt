@@ -6,6 +6,7 @@ alembic==1.11.1
 psycopg2-binary==2.9.9
 Werkzeug==2.3.7
 python-dotenv==1.0.1
+gunicorn==22.0.0
 
 # Test / quality
 pytest==7.4.0
