@@ -1,4 +1,5 @@
 """Base SQLAlchemy models used by AFRIVA."""
+
 from datetime import datetime, timezone
 
 from flask_sqlalchemy import SQLAlchemy
@@ -15,7 +16,9 @@ class BaseModel(db.Model):
     __abstract__ = True
 
     id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime(timezone=True), default=utcnow, nullable=False
+    )
     updated_at = db.Column(
         db.DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
     )
