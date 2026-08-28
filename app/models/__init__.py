@@ -16,30 +16,13 @@ from .crm import (
 )
 from .organization import Organization
 from .role import Permission, Role, role_permission
+from .sales import Product, Sale, SaleLine, SalesTarget
 from .user import OrganizationUser, User
 
 __all__ = [
-    "db",
-    "BaseModel",
-    "TenantAwareModel",
-    "Organization",
-    "User",
-    "OrganizationUser",
-    "Role",
-    "Permission",
-    "role_permission",
-    "ActivityLog",
-    "Plan",
-    "Subscription",
-    "Invoice",
-    "BillingPayment",
-    "Commercial",
-    "Client",
-    "Prospect",
-    "Visit",
-    "Prospection",
-    "Tour",
-    "TourStop",
-    "Task",
-    "Note",
+    "db", "BaseModel", "TenantAwareModel", "Organization", "User",
+    "OrganizationUser", "Role", "Permission", "role_permission", "ActivityLog",
+    "Plan", "Subscription", "Invoice", "BillingPayment", "Commercial", "Client",
+    "Prospect", "Visit", "Prospection", "Tour", "TourStop", "Task", "Note",
+    "Product", "Sale", "SaleLine", "SalesTarget",
 ]
