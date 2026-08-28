@@ -1,5 +1,7 @@
 """RBAC permission decorators scoped to the active organization membership."""
+
 from functools import wraps
+
 from flask import abort, g
 
 
