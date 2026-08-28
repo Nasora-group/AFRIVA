@@ -29,7 +29,9 @@ class ProductStock(TenantAwareModel):
         index=True,
     )
     quantity = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
-    reserved_quantity = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
+    reserved_quantity = db.Column(
+        db.Numeric(14, 3), nullable=False, default=Decimal("0")
+    )
     reorder_level = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
 
     product = db.relationship("Product")
