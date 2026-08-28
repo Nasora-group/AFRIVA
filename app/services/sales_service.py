@@ -41,6 +41,7 @@ class SalesService:
             **data,
         )
         total = Decimal("0.00")
+        allocations_by_item = []
         for item in items:
             product = self.products.get(item["product_id"])
             if product is None:
@@ -49,10 +50,11 @@ class SalesService:
             unit_price = Decimal(str(item.get("unit_price", product.unit_price)))
             if quantity <= 0 or unit_price < 0:
                 raise ValueError("Invalid quantity or unit price")
-            if store_id is not None:
-                allocations = self.inventory.consume_fefo(product.id, store_id, quantity)
-            else:
-                allocations = []
+            allocations = (
+                self.inventory.consume_fefo(product.id, store_id, quantity)
+                if store_id is not None
+                else []
+            )
             line_total = quantity * unit_price
             sale.items.append(
                 SaleItem(
@@ -64,24 +66,30 @@ class SalesService:
                 )
             )
             total += line_total
+            allocations_by_item.append((product.id, allocations))
+
+        sale.total_amount = total
+        db.session.add(sale)
+        # Persist the sale first so every stock movement can reference its
+        # stable primary key. Previously movements were flushed with a NULL
+        # reference_id and were no longer present in db.session.new.
+        db.session.flush()
+
+        for product_id, allocations in allocations_by_item:
             for allocation in allocations:
                 db.session.add(
                     StockMovement(
                         organization_id=organization_id,
-                        product_id=product.id,
+                        product_id=product_id,
                         store_id=store_id,
                         movement_type="sale",
                         quantity=-allocation["quantity"],
                         reference_type="sale",
+                        reference_id=sale.id,
                         note=f"FEFO batch {allocation['batch_id']}",
                     )
                 )
-        sale.total_amount = total
-        db.session.add(sale)
         db.session.flush()
-        for movement in db.session.new:
-            if isinstance(movement, StockMovement) and movement.reference_type == "sale":
-                movement.reference_id = sale.id
         return sale
 
     def set_target(self, year, month, target_amount, commercial_id=None):
