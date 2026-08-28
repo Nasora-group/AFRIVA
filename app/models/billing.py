@@ -38,9 +38,7 @@ class Subscription(TenantAwareModel):
     current_period_end = db.Column(db.DateTime(timezone=True), nullable=False)
     canceled_at = db.Column(db.DateTime(timezone=True), nullable=True)
     external_customer_id = db.Column(db.String(255), nullable=True)
-    external_subscription_id = db.Column(
-        db.String(255), unique=True, nullable=True
-    )
+    external_subscription_id = db.Column(db.String(255), unique=True, nullable=True)
 
     plan = db.relationship("Plan")
 
