@@ -74,9 +74,7 @@ def create_sale(
         quantity = _decimal(item.get("quantity", 1), "quantity")
         if quantity <= 0:
             raise SalesValidationError("quantity must be greater than zero")
-        unit_price = _decimal(
-            item.get("unit_price", product.unit_price), "unit_price"
-        )
+        unit_price = _decimal(item.get("unit_price", product.unit_price), "unit_price")
         line = SaleLine(
             organization_id=organization_id,
             product=product,
