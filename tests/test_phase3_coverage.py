@@ -240,9 +240,7 @@ def test_repository_filters_and_soft_deletes(app, monkeypatch):
     monkeypatch.setattr(db.session, "add", Mock())
     monkeypatch.setattr(db.session, "flush", Mock())
     assert repo.get_for_organization(1, 2) is entity
-    assert repo.list_for_organization(1, status="active", organization_id=999) == [
-        entity
-    ]
+    assert repo.list_for_organization(1, status="active", organization_id=999) == [entity]
     created = repo.create_for_organization(1, organization_id=999, name="X")
     assert created.organization_id == 1
     assert created.name == "X"
@@ -253,9 +251,7 @@ def test_repository_filters_and_soft_deletes(app, monkeypatch):
 
 def test_repository_soft_delete_missing_entity(app, monkeypatch):
     repo = BaseRepository()
-    monkeypatch.setattr(
-        repo, "get_for_organization", lambda org_id, entity_id: None
-    )
+    monkeypatch.setattr(repo, "get_for_organization", lambda org_id, entity_id: None)
     assert repo.soft_delete_for_organization(1, 99) is None
 
 
