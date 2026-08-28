@@ -114,7 +114,9 @@ class InventoryService:
             Store.active.is_(True),
         ).all()
         if len(stores) != 2:
-            raise ValueError("Source or destination store not found in current organization")
+            raise ValueError(
+                "Source or destination store not found in current organization"
+            )
         transfer = StockTransfer(
             organization_id=organization_id,
             source_store_id=source_store_id,
@@ -177,7 +179,10 @@ class InventoryService:
                 .with_for_update()
                 .first()
             )
-            if source_stock is None or Decimal(str(source_stock.quantity)) < item.quantity:
+            if (
+                source_stock is None
+                or Decimal(str(source_stock.quantity)) < item.quantity
+            ):
                 raise ValueError("Insufficient source stock")
             source_stock.quantity -= item.quantity
             destination_stock = (
