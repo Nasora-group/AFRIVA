@@ -1,10 +1,7 @@
-import pytest
-
 from app.models import (
     Client,
     Commercial,
     Contact,
-    Organization,
     Prospect,
     Prospection,
     Tour,
