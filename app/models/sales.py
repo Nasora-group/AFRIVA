@@ -11,7 +11,13 @@ class Product(TenantAwareModel):
 
     name = db.Column(db.String(255), nullable=False)
     sku = db.Column(db.String(100), nullable=True, index=True)
+    barcode = db.Column(db.String(100), nullable=True, index=True)
+    category_id = db.Column(
+        db.Integer, db.ForeignKey("product_category.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    purchase_price = db.Column(db.Numeric(12, 2), nullable=False, default=Decimal("0.00"))
     unit_price = db.Column(db.Numeric(12, 2), nullable=False, default=Decimal("0.00"))
+    tax_rate = db.Column(db.Numeric(5, 2), nullable=False, default=Decimal("0.00"))
     active = db.Column(db.Boolean, nullable=False, default=True)
 
 
@@ -25,11 +31,15 @@ class Sale(TenantAwareModel):
     cash_session_id = db.Column(
         db.Integer, db.ForeignKey("cash_session.id", ondelete="RESTRICT"), nullable=True, index=True
     )
+    store_id = db.Column(
+        db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=True, index=True
+    )
     total_amount = db.Column(db.Numeric(12, 2), nullable=False, default=Decimal("0.00"))
 
     items = db.relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
     payments = db.relationship("Payment", back_populates="sale", cascade="all, delete-orphan")
     cash_session = db.relationship("CashSession", back_populates="sales")
+    store = db.relationship("Store")
 
 
 class SaleItem(TenantAwareModel):
