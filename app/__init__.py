@@ -15,9 +15,11 @@ def create_app(config_object=Config):
     from .middleware.tenant_middleware import load_tenant_context
     from .api.crm import crm_api
     from .api.sales import sales_api
+    from .api.sales_dashboard import sales_dashboard_api
 
     app.register_blueprint(crm_api)
     app.register_blueprint(sales_api)
+    app.register_blueprint(sales_dashboard_api)
 
     @app.before_request
     def security_context():
