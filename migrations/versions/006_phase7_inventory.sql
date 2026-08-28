@@ -1,10 +1,5 @@
 -- AFRIVA Phase 7 inventory foundation. Test/staging only until migration is validated.
 
-ALTER TABLE product ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
-ALTER TABLE product ADD COLUMN IF NOT EXISTS category_id INTEGER REFERENCES product_category(id) ON DELETE SET NULL;
-ALTER TABLE product ADD COLUMN IF NOT EXISTS purchase_price NUMERIC(12,2) NOT NULL DEFAULT 0.00;
-ALTER TABLE product ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,2) NOT NULL DEFAULT 0.00;
-
 CREATE TABLE IF NOT EXISTS product_category (
     id SERIAL PRIMARY KEY,
     organization_id INTEGER NOT NULL REFERENCES organization(id) ON DELETE RESTRICT,
@@ -16,6 +11,12 @@ CREATE TABLE IF NOT EXISTS product_category (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (organization_id, code)
 );
+
+ALTER TABLE product ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+ALTER TABLE product ADD COLUMN IF NOT EXISTS category_id INTEGER REFERENCES product_category(id) ON DELETE SET NULL;
+ALTER TABLE product ADD COLUMN IF NOT EXISTS purchase_price NUMERIC(12,2) NOT NULL DEFAULT 0.00;
+ALTER TABLE product ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,2) NOT NULL DEFAULT 0.00;
+ALTER TABLE sale ADD COLUMN IF NOT EXISTS store_id INTEGER REFERENCES store(id) ON DELETE RESTRICT;
 
 CREATE TABLE IF NOT EXISTS product_stock (
     id SERIAL PRIMARY KEY,
@@ -68,6 +69,7 @@ CREATE TABLE IF NOT EXISTS product_batch (
 
 CREATE INDEX IF NOT EXISTS ix_product_barcode ON product(barcode);
 CREATE INDEX IF NOT EXISTS ix_product_category ON product(category_id);
+CREATE INDEX IF NOT EXISTS ix_sale_store ON sale(store_id);
 CREATE INDEX IF NOT EXISTS ix_stock_product_store ON product_stock(product_id, store_id);
 CREATE INDEX IF NOT EXISTS ix_stock_movement_product_store ON stock_movement(product_id, store_id);
 CREATE INDEX IF NOT EXISTS ix_batch_expiry ON product_batch(expiry_date);
