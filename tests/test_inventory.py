@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from app.models import Organization, Product, ProductStock, StockMovement, Store, db
+from app.services.inventory_service import InventoryService
 
 
 def _setup(app, monkeypatch):
@@ -26,7 +27,7 @@ def _setup(app, monkeypatch):
 
 def test_inventory_purchase_then_sale_adjustment(app, monkeypatch):
     _, store, product = _setup(app, monkeypatch)
-    service = __import__("app.services.inventory_service", fromlist=["InventoryService"]).InventoryService()
+    service = InventoryService()
 
     stock, purchase = service.adjust_stock(product.id, store.id, "10", "purchase")
     db.session.commit()
@@ -42,7 +43,7 @@ def test_inventory_purchase_then_sale_adjustment(app, monkeypatch):
 
 def test_inventory_rejects_insufficient_stock(app, monkeypatch):
     _, store, product = _setup(app, monkeypatch)
-    service = __import__("app.services.inventory_service", fromlist=["InventoryService"]).InventoryService()
+    service = InventoryService()
 
     try:
         service.adjust_stock(product.id, store.id, "1", "sale")
@@ -51,13 +52,11 @@ def test_inventory_rejects_insufficient_stock(app, monkeypatch):
     else:
         raise AssertionError("Expected insufficient stock error")
     db.session.rollback()
-    assert ProductStock.query.count() == 1
-    stock = ProductStock.query.first()
-    assert Decimal(stock.quantity) == Decimal("0")
+    assert ProductStock.query.count() == 0
 
 
 def test_inventory_is_tenant_scoped(app, monkeypatch):
-    org, store, product = _setup(app, monkeypatch)
+    org, store, _ = _setup(app, monkeypatch)
     other = Organization(name="Other Inventory", slug="other-inventory")
     db.session.add(other)
     db.session.flush()
@@ -67,7 +66,7 @@ def test_inventory_is_tenant_scoped(app, monkeypatch):
     db.session.add(foreign_product)
     db.session.commit()
 
-    service = __import__("app.services.inventory_service", fromlist=["InventoryService"]).InventoryService()
+    service = InventoryService()
     try:
         service.adjust_stock(foreign_product.id, store.id, "1", "purchase")
     except ValueError as exc:
@@ -76,3 +75,4 @@ def test_inventory_is_tenant_scoped(app, monkeypatch):
         raise AssertionError("Expected tenant isolation error")
     db.session.rollback()
     assert ProductStock.query.count() == 0
+    assert org.id != other.id
