@@ -22,6 +22,4 @@ class Config:
             if not value
         ]
         if missing:
-            raise RuntimeError(
-                f"Missing required environment variables: {', '.join(missing)}"
-            )
+            raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
