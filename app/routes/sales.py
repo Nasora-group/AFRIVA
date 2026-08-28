@@ -1,8 +1,5 @@
 """HTTP API for AFRIVA sales."""
 
-from datetime import datetime
-from decimal import Decimal
-
 from flask import Blueprint, g, jsonify, request
 
 from app.auth import login_required
@@ -42,8 +39,26 @@ def _sale_json(sale):
 @sales_bp.get("/products")
 @login_required
 def products():
-    rows = Product.query.filter_by(organization_id=g.current_org_id, deleted_at=None, active=True).order_by(Product.name).all()
-    return jsonify({"items": [{"id": p.id, "name": p.name, "sku": p.sku, "unit": p.unit, "unit_price": _money(p.unit_price)} for p in rows]})
+    rows = (
+        Product.query.filter_by(
+            organization_id=g.current_org_id,
+            deleted_at=None,
+            active=True,
+        )
+        .order_by(Product.name)
+        .all()
+    )
+    items = [
+        {
+            "id": p.id,
+            "name": p.name,
+            "sku": p.sku,
+            "unit": p.unit,
+            "unit_price": _money(p.unit_price),
+        }
+        for p in rows
+    ]
+    return jsonify({"items": items})
 
 
 @sales_bp.post("")
@@ -67,7 +82,10 @@ def create():
 @sales_bp.get("")
 @login_required
 def list_sales():
-    query = Sale.query.filter_by(organization_id=g.current_org_id, deleted_at=None)
+    query = Sale.query.filter_by(
+        organization_id=g.current_org_id,
+        deleted_at=None,
+    )
     status = request.args.get("status")
     if status:
         query = query.filter_by(status=status)
@@ -75,7 +93,10 @@ def list_sales():
     if commercial_id:
         query = query.filter_by(commercial_id=commercial_id)
     rows = query.order_by(Sale.sold_at.desc(), Sale.id.desc()).all()
-    return jsonify({"items": [_sale_json(sale) for sale in rows], "count": len(rows)})
+    return jsonify({
+        "items": [_sale_json(sale) for sale in rows],
+        "count": len(rows),
+    })
 
 
 @sales_bp.put("/targets")
