@@ -1,9 +1,8 @@
 """SaaS billing models."""
 
-from datetime import timedelta
 from decimal import Decimal
 
-from .base import TenantAwareModel, db, utcnow
+from .base import BaseModel, TenantAwareModel, db, utcnow
 
 
 class Plan(BaseModel):
@@ -24,7 +23,9 @@ class Plan(BaseModel):
 class Subscription(TenantAwareModel):
     __tablename__ = "billing_subscription"
 
-    plan_id = db.Column(db.Integer, db.ForeignKey("billing_plan.id", ondelete="RESTRICT"), nullable=False)
+    plan_id = db.Column(
+        db.Integer, db.ForeignKey("billing_plan.id", ondelete="RESTRICT"), nullable=False
+    )
     status = db.Column(db.String(30), nullable=False, default="trialing", index=True)
     billing_interval = db.Column(db.String(20), nullable=False, default="monthly")
     started_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
@@ -33,7 +34,7 @@ class Subscription(TenantAwareModel):
     current_period_end = db.Column(db.DateTime(timezone=True), nullable=False)
     canceled_at = db.Column(db.DateTime(timezone=True), nullable=True)
     external_customer_id = db.Column(db.String(255), nullable=True)
-    external_subscription_id = db.Column(db.String(255), nullable=True, unique=True)
+    external_subscription_id = db.Column(db.String(255), unique=True, nullable=True)
 
     plan = db.relationship("Plan")
 
