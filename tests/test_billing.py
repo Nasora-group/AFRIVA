@@ -50,6 +50,26 @@ def test_billing_subscription_invoice_payment_lifecycle(app, monkeypatch):
     assert plan.id == subscription.plan_id
 
 
+def test_billing_partial_payment_and_balance(app, monkeypatch):
+    _billing_context(app, monkeypatch)
+    service = BillingService()
+    subscription = service.create_subscription("starter", trial=False)
+    db.session.commit()
+    invoice = service.create_invoice(subscription.id, "INV-0002")
+    db.session.commit()
+
+    service.record_payment(invoice.id, "4000")
+    db.session.commit()
+    assert Invoice.query.get(invoice.id).status == "open"
+
+    with pytest.raises(ValueError, match="exceeds invoice balance"):
+        service.record_payment(invoice.id, "7000")
+
+    service.record_payment(invoice.id, "6000")
+    db.session.commit()
+    assert Invoice.query.get(invoice.id).status == "paid"
+
+
 def test_billing_rejects_second_active_subscription(app, monkeypatch):
     _billing_context(app, monkeypatch)
     service = BillingService()
