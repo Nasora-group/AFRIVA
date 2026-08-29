@@ -11,6 +11,7 @@ from app.models import (
     Product,
     ProductBatch,
     ProductStock,
+    StockMovement,
     Store,
     db,
 )
@@ -61,7 +62,7 @@ def open_session(*, organization_id, register_id, user_id, opening_cash):
     return session
 
 
-def _consume_inventory(organization_id, store_id, product_id, quantity):
+def _consume_inventory(organization_id, store_id, product_id, quantity, sale_id=None):
     """Decrease store stock and consume non-expired batches FEFO, atomically."""
     stock = (
         ProductStock.query.filter_by(
@@ -103,6 +104,20 @@ def _consume_inventory(organization_id, store_id, product_id, quantity):
         batch.quantity -= taken
         remaining -= taken
 
+    if sale_id is not None:
+        db.session.add(
+            StockMovement(
+                organization_id=organization_id,
+                product_id=product_id,
+                store_id=store_id,
+                movement_type="OUT",
+                quantity=quantity,
+                reference_type="POS",
+                reference_id=sale_id,
+                note="POS sale stock consumption",
+            )
+        )
+
 
 def create_pos_sale(*, organization_id, session_id, lines, payments=None):
     session = CashSession.query.filter_by(
@@ -121,6 +136,8 @@ def create_pos_sale(*, organization_id, session_id, lines, payments=None):
         ),
         status="confirmed",
     )
+    db.session.add(sale)
+    db.session.flush()
     total = Decimal("0")
     for item in lines:
         product = Product.query.filter_by(
@@ -150,6 +167,7 @@ def create_pos_sale(*, organization_id, session_id, lines, payments=None):
             session.register.store_id,
             product.id,
             quantity,
+            sale.id,
         )
         total += line_total
     sale.total_amount = total
@@ -170,7 +188,6 @@ def create_pos_sale(*, organization_id, session_id, lines, payments=None):
         payment_total += amount
     if payments and payment_total != total:
         raise POSValidationError("Payments must equal the sale total")
-    db.session.add(sale)
     db.session.commit()
     return sale
 
