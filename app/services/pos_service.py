@@ -2,7 +2,16 @@
 
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
-from app.models import POSPayment, POSSale, POSSaleLine, POSRegister, CashSession, Product, Store, db
+from app.models import (
+    POSPayment,
+    POSSale,
+    POSSaleLine,
+    POSRegister,
+    CashSession,
+    Product,
+    Store,
+    db,
+)
 
 
 class POSValidationError(ValueError):
@@ -20,14 +29,18 @@ def money(value, field="amount"):
 
 
 def open_session(*, organization_id, register_id, user_id, opening_cash):
-    register = POSRegister.query.join(Store).filter(
-        POSRegister.id == register_id,
-        POSRegister.organization_id == organization_id,
-        POSRegister.active.is_(True),
-        Store.organization_id == organization_id,
-        Store.active.is_(True),
-        POSRegister.store_id == Store.id,
-    ).first()
+    register = (
+        POSRegister.query.join(Store)
+        .filter(
+            POSRegister.id == register_id,
+            POSRegister.organization_id == organization_id,
+            POSRegister.active.is_(True),
+            Store.organization_id == organization_id,
+            Store.active.is_(True),
+            POSRegister.store_id == Store.id,
+        )
+        .first()
+    )
     if register is None:
         raise POSValidationError("Register not found in current organization")
     existing = CashSession.query.filter_by(
@@ -57,14 +70,19 @@ def create_pos_sale(*, organization_id, session_id, lines, payments=None):
     sale = POSSale(
         organization_id=organization_id,
         session=session,
-        reference=f"POS-{session.id}-{POSSale.query.filter_by(organization_id=organization_id).count() + 1}",
+        reference=(
+            f"POS-{session.id}-"
+            f"{POSSale.query.filter_by(organization_id=organization_id).count() + 1}"
+        ),
         status="confirmed",
     )
     total = Decimal("0")
     for item in lines:
         product = Product.query.filter_by(
-            id=item.get("product_id"), organization_id=organization_id,
-            deleted_at=None, active=True
+            id=item.get("product_id"),
+            organization_id=organization_id,
+            deleted_at=None,
+            active=True,
         ).first()
         if product is None:
             raise POSValidationError("Product not found in current organization")
@@ -73,10 +91,15 @@ def create_pos_sale(*, organization_id, session_id, lines, payments=None):
             raise POSValidationError("quantity must be greater than zero")
         price = money(item.get("unit_price", product.unit_price), "unit_price")
         line_total = (quantity * price).quantize(Decimal("0.01"))
-        sale.lines.append(POSSaleLine(
-            organization_id=organization_id, product=product,
-            quantity=quantity, unit_price=price, line_total=line_total
-        ))
+        sale.lines.append(
+            POSSaleLine(
+                organization_id=organization_id,
+                product=product,
+                quantity=quantity,
+                unit_price=price,
+                line_total=line_total,
+            )
+        )
         total += line_total
     sale.total_amount = total
     payment_total = Decimal("0")
@@ -86,9 +109,13 @@ def create_pos_sale(*, organization_id, session_id, lines, payments=None):
             raise POSValidationError("payment amount must be greater than zero")
         if item.get("method") not in {"cash", "card", "mobile_money", "transfer"}:
             raise POSValidationError("Invalid payment method")
-        sale.payments.append(POSPayment(
-            organization_id=organization_id, method=item["method"], amount=amount
-        ))
+        sale.payments.append(
+            POSPayment(
+                organization_id=organization_id,
+                method=item["method"],
+                amount=amount,
+            )
+        )
         payment_total += amount
     if payments and payment_total != total:
         raise POSValidationError("Payments must equal the sale total")
