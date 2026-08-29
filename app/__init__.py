@@ -21,11 +21,11 @@ def create_app(config_object=Config):
         """Basic service endpoint for smoke tests."""
         return jsonify({"service": "AFRIVA", "status": "ok"}), 200
 
+    from . import auth
     from .api.analytics import analytics_api
     from .api.billing import billing_api
     from .api.inventory import inventory_api
     from .api.transfers import transfers_api
-    from . import auth
     from .middleware import tenant_middleware
     from .routes.pos import pos_bp
     from .routes.sales import sales_bp

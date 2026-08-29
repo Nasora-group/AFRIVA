@@ -59,9 +59,7 @@ def summary():
             "period": period,
             "revenue": str(revenue),
             "sales_count": total_sales,
-            "clients": Client.query.filter_by(
-                organization_id=organization_id
-            ).count(),
+            "clients": Client.query.filter_by(organization_id=organization_id).count(),
             "prospections": Prospection.query.filter_by(
                 organization_id=organization_id
             ).count(),

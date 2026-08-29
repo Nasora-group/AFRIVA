@@ -35,9 +35,7 @@ def test_analytics_summary_includes_confirmed_pos_sales(app, tenant, monkeypatch
     )
     db.session.add(pos_sale)
     db.session.commit()
-    monkeypatch.setattr(
-        "app.api.analytics.get_current_organization", lambda: tenant
-    )
+    monkeypatch.setattr("app.api.analytics.get_current_organization", lambda: tenant)
 
     response = app.test_client().get("/api/v1/analytics/summary?period=all")
 

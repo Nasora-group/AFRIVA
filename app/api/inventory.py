@@ -6,9 +6,7 @@ from app.auth import login_required
 from app.models import db
 from app.services.inventory_service import InventoryService
 
-inventory_api = Blueprint(
-    "inventory_api", __name__, url_prefix="/api/v1/inventory"
-)
+inventory_api = Blueprint("inventory_api", __name__, url_prefix="/api/v1/inventory")
 
 
 @inventory_api.post("/movements")
@@ -30,14 +28,17 @@ def create_movement():
         db.session.rollback()
         return jsonify({"error": str(exc)}), 400
 
-    return jsonify(
-        {
-            "stock_id": stock.id,
-            "product_id": stock.product_id,
-            "store_id": stock.store_id,
-            "quantity": str(stock.quantity),
-            "movement_id": movement.id,
-            "movement_type": movement.movement_type,
-            "delta": str(movement.quantity),
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "stock_id": stock.id,
+                "product_id": stock.product_id,
+                "store_id": stock.store_id,
+                "quantity": str(stock.quantity),
+                "movement_id": movement.id,
+                "movement_type": movement.movement_type,
+                "delta": str(movement.quantity),
+            }
+        ),
+        201,
+    )
