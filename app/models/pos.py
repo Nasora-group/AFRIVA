@@ -17,7 +17,9 @@ class Store(TenantAwareModel):
 class POSRegister(TenantAwareModel):
     __tablename__ = "pos_register"
 
-    store_id = db.Column(db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=False, index=True)
+    store_id = db.Column(
+        db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
     name = db.Column(db.String(100), nullable=False)
     code = db.Column(db.String(100), nullable=False, index=True)
     active = db.Column(db.Boolean, nullable=False, default=True, index=True)
@@ -27,9 +29,18 @@ class POSRegister(TenantAwareModel):
 class CashSession(TenantAwareModel):
     __tablename__ = "cash_session"
 
-    register_id = db.Column(db.Integer, db.ForeignKey("pos_register.id", ondelete="RESTRICT"), nullable=False, index=True)
-    opened_by = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="RESTRICT"), nullable=False)
-    closed_by = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="RESTRICT"), nullable=True)
+    register_id = db.Column(
+        db.Integer,
+        db.ForeignKey("pos_register.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    opened_by = db.Column(
+        db.Integer, db.ForeignKey("user.id", ondelete="RESTRICT"), nullable=False
+    )
+    closed_by = db.Column(
+        db.Integer, db.ForeignKey("user.id", ondelete="RESTRICT"), nullable=True
+    )
     opened_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     closed_at = db.Column(db.DateTime(timezone=True), nullable=True)
     opening_cash = db.Column(db.Numeric(14, 2), nullable=False, default=Decimal("0"))
@@ -41,7 +52,12 @@ class CashSession(TenantAwareModel):
 class POSSale(TenantAwareModel):
     __tablename__ = "pos_sale"
 
-    session_id = db.Column(db.Integer, db.ForeignKey("cash_session.id", ondelete="RESTRICT"), nullable=False, index=True)
+    session_id = db.Column(
+        db.Integer,
+        db.ForeignKey("cash_session.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     reference = db.Column(db.String(100), nullable=False, unique=True, index=True)
     sold_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, index=True)
     status = db.Column(db.String(20), nullable=False, default="confirmed", index=True)
@@ -54,8 +70,18 @@ class POSSale(TenantAwareModel):
 class POSSaleLine(TenantAwareModel):
     __tablename__ = "pos_sale_line"
 
-    sale_id = db.Column(db.Integer, db.ForeignKey("pos_sale.id", ondelete="CASCADE"), nullable=False, index=True)
-    product_id = db.Column(db.Integer, db.ForeignKey("product.id", ondelete="RESTRICT"), nullable=False, index=True)
+    sale_id = db.Column(
+        db.Integer,
+        db.ForeignKey("pos_sale.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    product_id = db.Column(
+        db.Integer,
+        db.ForeignKey("product.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     quantity = db.Column(db.Numeric(14, 3), nullable=False)
     unit_price = db.Column(db.Numeric(14, 2), nullable=False)
     line_total = db.Column(db.Numeric(14, 2), nullable=False)
@@ -66,7 +92,12 @@ class POSSaleLine(TenantAwareModel):
 class POSPayment(TenantAwareModel):
     __tablename__ = "pos_payment"
 
-    sale_id = db.Column(db.Integer, db.ForeignKey("pos_sale.id", ondelete="CASCADE"), nullable=False, index=True)
+    sale_id = db.Column(
+        db.Integer,
+        db.ForeignKey("pos_sale.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     method = db.Column(db.String(30), nullable=False)
     amount = db.Column(db.Numeric(14, 2), nullable=False)
     paid_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
