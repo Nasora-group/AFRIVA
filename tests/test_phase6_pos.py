@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.models import POSRegister, Product, Store, db
+from app.models import POSRegister, Product, ProductStock, Store, db
 from app.services.pos_service import (
     POSValidationError,
     close_session,
@@ -30,7 +30,16 @@ def pos_setup(tenant):
         sku="TEST-1",
         unit_price=Decimal("12.50"),
     )
+    stock = ProductStock(
+        organization_id=tenant.id,
+        store_id=store.id,
+        product_id=None,
+        quantity=Decimal("10"),
+    )
     db.session.add_all([register, product])
+    db.session.flush()
+    stock.product_id = product.id
+    db.session.add(stock)
     db.session.commit()
     return store, register, product
 
