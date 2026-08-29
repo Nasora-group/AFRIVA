@@ -1,17 +1,18 @@
+#!/usr/bin/env python3
 """Apply AFRIVA's ordered PostgreSQL SQL migrations safely."""
 
 from pathlib import Path
 
+import os
 import psycopg2
-from flask import current_app
 
 MIGRATIONS_DIR = Path(__file__).resolve().parents[1] / "migrations" / "versions"
 
 
 def database_url():
-    url = current_app.config.get("SQLALCHEMY_DATABASE_URI")
+    url = os.getenv("DATABASE_URL")
     if not url:
-        raise RuntimeError("DATABASE_URL / SQLALCHEMY_DATABASE_URI is not configured")
+        raise RuntimeError("DATABASE_URL is not configured")
     return url.replace("postgresql+psycopg2://", "postgresql://", 1)
 
 
@@ -47,18 +48,11 @@ def migrate():
                     "INSERT INTO schema_migrations (version) VALUES (%s)",
                     (version,),
                 )
+                print(f"Applied {version}")
 
         conn.commit()
 
 
-def main():
-    from app import create_app
-
-    app = create_app()
-    with app.app_context():
-        migrate()
-    print("AFRIVA SQL migrations applied successfully.")
-
-
 if __name__ == "__main__":
-    main()
+    migrate()
+    print("AFRIVA SQL migrations applied successfully.")
