@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 
 from app.middleware.tenant_middleware import get_current_organization
-from app.models import Client, Prospection, Sale, db
+from app.models import Client, POSSale, Prospection, Sale, db
 
 analytics_api = Blueprint("analytics_api", __name__, url_prefix="/api/v1/analytics")
 
@@ -34,19 +34,31 @@ def summary():
     if period not in {"month", "year", "all"}:
         return jsonify({"error": "Unsupported period"}), 400
 
-    query = db.session.query(
+    start = _period_start(period)
+
+    sales_query = db.session.query(
         func.coalesce(func.sum(Sale.total_amount), 0), func.count(Sale.id)
     ).filter(Sale.organization_id == organization_id)
-    start = _period_start(period)
+    pos_query = db.session.query(
+        func.coalesce(func.sum(POSSale.total_amount), 0), func.count(POSSale.id)
+    ).filter(
+        POSSale.organization_id == organization_id,
+        POSSale.status == "confirmed",
+    )
     if start is not None:
-        query = query.filter(Sale.sold_at >= start)
-    revenue, sales_count = query.one()
+        sales_query = sales_query.filter(Sale.sold_at >= start)
+        pos_query = pos_query.filter(POSSale.sold_at >= start)
+
+    sales_revenue, sales_count = sales_query.one()
+    pos_revenue, pos_count = pos_query.one()
+    revenue = sales_revenue + pos_revenue
+    total_sales = sales_count + pos_count
 
     return jsonify(
         {
             "period": period,
             "revenue": str(revenue),
-            "sales_count": sales_count,
+            "sales_count": total_sales,
             "clients": Client.query.filter_by(
                 organization_id=organization_id
             ).count(),
