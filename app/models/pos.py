@@ -62,12 +62,20 @@ class POSSale(TenantAwareModel):
         index=True,
     )
     reference = db.Column(db.String(100), nullable=False, unique=True, index=True)
-    sold_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, index=True)
+    sold_at = db.Column(
+        db.DateTime(timezone=True), nullable=False, default=utcnow, index=True
+    )
     status = db.Column(db.String(20), nullable=False, default="confirmed", index=True)
-    total_amount = db.Column(db.Numeric(14, 2), nullable=False, default=Decimal("0"))
+    total_amount = db.Column(
+        db.Numeric(14, 2), nullable=False, default=Decimal("0")
+    )
     session = db.relationship("CashSession")
-    lines = db.relationship("POSSaleLine", back_populates="sale", cascade="all, delete-orphan")
-    payments = db.relationship("POSPayment", back_populates="sale", cascade="all, delete-orphan")
+    lines = db.relationship(
+        "POSSaleLine", back_populates="sale", cascade="all, delete-orphan"
+    )
+    payments = db.relationship(
+        "POSPayment", back_populates="sale", cascade="all, delete-orphan"
+    )
 
 
 class POSSaleLine(TenantAwareModel):
