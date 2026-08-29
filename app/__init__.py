@@ -23,6 +23,7 @@ def create_app(config_object=Config):
 
     from .auth import load_current_user
     from .middleware.tenant_middleware import load_tenant_context
+    from .api.billing import billing_api
     from .api.inventory import inventory_api
     from .api.transfers import transfers_api
     from .routes.pos import pos_bp
@@ -32,11 +33,10 @@ def create_app(config_object=Config):
     app.register_blueprint(pos_bp)
     app.register_blueprint(inventory_api)
     app.register_blueprint(transfers_api)
+    app.register_blueprint(billing_api)
 
     @app.before_request
     def security_context():
-        # Keep the infrastructure health endpoint independent from session and
-        # tenant database lookups so Render can reliably determine readiness.
         if request.path == "/health":
             return None
         load_current_user()
