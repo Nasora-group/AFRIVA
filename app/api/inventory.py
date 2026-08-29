@@ -6,7 +6,9 @@ from app.auth import login_required
 from app.models import db
 from app.services.inventory_service import InventoryService
 
-inventory_api = Blueprint("inventory_api", __name__, url_prefix="/api/v1/inventory")
+inventory_api = Blueprint(
+    "inventory_api", __name__, url_prefix="/api/v1/inventory"
+)
 
 
 @inventory_api.post("/movements")

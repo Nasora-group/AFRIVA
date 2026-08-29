@@ -13,7 +13,9 @@ class ProductCategory(TenantAwareModel):
     active = db.Column(db.Boolean, nullable=False, default=True)
 
     __table_args__ = (
-        db.UniqueConstraint("organization_id", "code", name="uq_product_category_org_code"),
+        db.UniqueConstraint(
+            "organization_id", "code", name="uq_product_category_org_code"
+        ),
     )
 
 
@@ -33,8 +35,12 @@ class ProductStock(TenantAwareModel):
         index=True,
     )
     quantity = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
-    reserved_quantity = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
-    reorder_level = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
+    reserved_quantity = db.Column(
+        db.Numeric(14, 3), nullable=False, default=Decimal("0")
+    )
+    reorder_level = db.Column(
+        db.Numeric(14, 3), nullable=False, default=Decimal("0")
+    )
 
     product = db.relationship("Product")
     store = db.relationship("Store")
