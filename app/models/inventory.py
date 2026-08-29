@@ -12,6 +12,12 @@ class ProductCategory(TenantAwareModel):
     code = db.Column(db.String(100), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=True)
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "organization_id", "code", name="uq_product_category_org_code"
+        ),
+    )
+
 
 class ProductStock(TenantAwareModel):
     __tablename__ = "product_stock"
@@ -32,10 +38,21 @@ class ProductStock(TenantAwareModel):
     reserved_quantity = db.Column(
         db.Numeric(14, 3), nullable=False, default=Decimal("0")
     )
-    reorder_level = db.Column(db.Numeric(14, 3), nullable=False, default=Decimal("0"))
+    reorder_level = db.Column(
+        db.Numeric(14, 3), nullable=False, default=Decimal("0")
+    )
 
     product = db.relationship("Product")
     store = db.relationship("Store")
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "organization_id",
+            "product_id",
+            "store_id",
+            name="uq_product_stock_org_product_store",
+        ),
+    )
 
 
 class StockMovement(TenantAwareModel):
@@ -81,6 +98,16 @@ class ProductBatch(TenantAwareModel):
 
     product = db.relationship("Product")
     store = db.relationship("Store")
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "organization_id",
+            "product_id",
+            "store_id",
+            "batch_number",
+            name="uq_product_batch_org_product_store_batch",
+        ),
+    )
 
 
 class StockTransfer(TenantAwareModel):

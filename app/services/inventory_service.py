@@ -1,5 +1,6 @@
-"""Tenant-safe inventory operations."""
+"""Tenant-safe inventory operations for Phase 7."""
 
+from datetime import date
 from decimal import Decimal, InvalidOperation
 
 from app.middleware.tenant_middleware import get_current_organization
@@ -148,11 +149,8 @@ class InventoryService:
                 )
                 if batch is None:
                     raise ValueError("Batch not found in source store")
-                if batch.expiry_date is not None:
-                    from datetime import date
-
-                    if batch.expiry_date < date.today():
-                        raise ValueError("Expired batch cannot be transferred")
+                if batch.expiry_date is not None and batch.expiry_date < date.today():
+                    raise ValueError("Expired batch cannot be transferred")
                 if Decimal(str(batch.quantity)) < quantity:
                     raise ValueError("Insufficient batch stock")
             transfer.items.append(
@@ -275,8 +273,6 @@ class InventoryService:
         Product.query.filter_by(
             id=product_id, organization_id=organization_id, active=True
         ).first_or_404()
-        from datetime import date
-
         batches = (
             ProductBatch.query.filter(
                 ProductBatch.product_id == product_id,

@@ -23,11 +23,13 @@ def create_app(config_object=Config):
 
     from .auth import load_current_user
     from .middleware.tenant_middleware import load_tenant_context
+    from .api.inventory import inventory_api
     from .routes.pos import pos_bp
     from .routes.sales import sales_bp
 
     app.register_blueprint(sales_bp)
     app.register_blueprint(pos_bp)
+    app.register_blueprint(inventory_api)
 
     @app.before_request
     def security_context():
