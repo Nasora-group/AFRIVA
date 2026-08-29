@@ -1,7 +1,7 @@
 """Business rules for AFRIVA SaaS subscriptions and billing."""
 
-from datetime import timedelta
-from decimal import Decimal
+from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
 
 from app.middleware.tenant_middleware import get_current_organization
 from app.models import BillingPayment, Invoice, Plan, Subscription, db
@@ -24,6 +24,16 @@ class BillingService:
         if interval == "yearly":
             return start + timedelta(days=365)
         raise ValueError("Unsupported billing interval")
+
+    @staticmethod
+    def _money(value):
+        try:
+            amount = Decimal(str(value))
+        except (InvalidOperation, TypeError, ValueError) as exc:
+            raise ValueError("Amount must be a valid number") from exc
+        if amount <= 0:
+            raise ValueError("Amount must be greater than zero")
+        return amount
 
     def create_subscription(self, plan_code, interval="monthly", trial=True):
         organization_id = self._organization_id()
@@ -72,6 +82,8 @@ class BillingService:
 
     def create_invoice(self, subscription_id, number, due_at=None):
         organization_id = self._organization_id()
+        if not number or not str(number).strip():
+            raise ValueError("Invoice number is required")
         subscription = Subscription.query.filter_by(
             id=subscription_id, organization_id=organization_id
         ).first()
@@ -79,6 +91,11 @@ class BillingService:
             raise ValueError("Subscription not found")
         if subscription.status not in {"active", "trialing"}:
             raise ValueError("Subscription is not billable")
+        if isinstance(due_at, str):
+            try:
+                due_at = datetime.fromisoformat(due_at.replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ValueError("due_at must be a valid ISO-8601 datetime") from exc
         price = (
             subscription.plan.monthly_price
             if subscription.billing_interval == "monthly"
@@ -87,7 +104,7 @@ class BillingService:
         invoice = Invoice(
             organization_id=organization_id,
             subscription_id=subscription.id,
-            number=number,
+            number=str(number).strip(),
             amount=Decimal(str(price)),
             currency="XOF",
             due_at=due_at,
@@ -105,31 +122,31 @@ class BillingService:
         ).first()
         if invoice is None:
             raise ValueError("Invoice not found")
-        payment_amount = Decimal(str(amount))
-        if payment_amount <= 0:
-            raise ValueError("Payment amount must be greater than zero")
+        payment_amount = self._money(amount)
         if invoice.status == "paid":
             raise ValueError("Invoice is already paid")
-        payment = BillingPayment(
-            organization_id=organization_id,
-            invoice_id=invoice.id,
-            amount=payment_amount,
-            currency=invoice.currency,
-            status="succeeded",
-            provider=provider,
-            provider_reference=provider_reference,
-            paid_at=utcnow(),
-        )
-        db.session.add(payment)
-        db.session.flush()
         payments = BillingPayment.query.filter_by(
             invoice_id=invoice.id,
             organization_id=organization_id,
             status="succeeded",
         ).all()
         paid_total = sum((Decimal(str(item.amount)) for item in payments), Decimal("0"))
-        if paid_total >= Decimal(str(invoice.amount)):
+        remaining = Decimal(str(invoice.amount)) - paid_total
+        if payment_amount > remaining:
+            raise ValueError("Payment exceeds invoice balance")
+        payment = BillingPayment(
+            organization_id=organization_id,
+            invoice_id=invoice.id,
+            amount=payment_amount,
+            currency=invoice.currency,
+            status="succeeded",
+            provider=provider or "manual",
+            provider_reference=provider_reference,
+            paid_at=utcnow(),
+        )
+        db.session.add(payment)
+        db.session.flush()
+        if paid_total + payment_amount == Decimal(str(invoice.amount)):
             invoice.status = "paid"
             invoice.paid_at = payment.paid_at
-        db.session.flush()
         return payment
