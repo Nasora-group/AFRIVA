@@ -39,10 +39,14 @@ class CashSession(TenantAwareModel):
         index=True,
     )
     opened_by = db.Column(
-        db.Integer, db.ForeignKey("user.id", ondelete="RESTRICT"), nullable=False
+        db.Integer,
+        db.ForeignKey("user.id", ondelete="RESTRICT"),
+        nullable=False,
     )
     closed_by = db.Column(
-        db.Integer, db.ForeignKey("user.id", ondelete="RESTRICT"), nullable=True
+        db.Integer,
+        db.ForeignKey("user.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     opened_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     closed_at = db.Column(db.DateTime(timezone=True), nullable=True)
@@ -66,9 +70,7 @@ class POSSale(TenantAwareModel):
         db.DateTime(timezone=True), nullable=False, default=utcnow, index=True
     )
     status = db.Column(db.String(20), nullable=False, default="confirmed", index=True)
-    total_amount = db.Column(
-        db.Numeric(14, 2), nullable=False, default=Decimal("0")
-    )
+    total_amount = db.Column(db.Numeric(14, 2), nullable=False, default=Decimal("0"))
     session = db.relationship("CashSession")
     lines = db.relationship(
         "POSSaleLine", back_populates="sale", cascade="all, delete-orphan"
