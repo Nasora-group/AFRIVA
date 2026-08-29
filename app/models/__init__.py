@@ -14,6 +14,7 @@ from .crm import (
     TourStop,
     Visit,
 )
+from .inventory import ProductBatch, ProductCategory, ProductStock, StockMovement
 from .organization import Organization
 from .pos import CashSession, POSPayment, POSRegister, POSSale, POSSaleLine, Store
 from .role import Permission, Role, role_permission
@@ -48,6 +49,10 @@ __all__ = [
     "Sale",
     "SaleLine",
     "SalesTarget",
+    "ProductCategory",
+    "ProductStock",
+    "StockMovement",
+    "ProductBatch",
     "Store",
     "POSRegister",
     "CashSession",
