@@ -24,7 +24,8 @@ def test_billing_lifecycle_and_tenant_isolation(app, inventory_context, monkeypa
     db.session.add(plan)
     db.session.commit()
     monkeypatch.setattr(
-        "app.services.billing_service.get_current_organization", lambda: organization
+        "app.services.billing_service.get_current_organization",
+        lambda: organization,
     )
 
     service = BillingService()
