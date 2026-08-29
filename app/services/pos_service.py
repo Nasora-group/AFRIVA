@@ -1,0 +1,111 @@
+"""Business rules for POS and cash sessions."""
+
+from decimal import Decimal, InvalidOperation
+
+from app.models import POSPayment, POSSale, POSSaleLine, POSRegister, CashSession, Product, Store, db
+
+
+class POSValidationError(ValueError):
+    """Raised when a POS operation is invalid."""
+
+
+def money(value, field="amount"):
+    try:
+        result = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise POSValidationError(f"{field} must be a valid number") from exc
+    if result < 0:
+        raise POSValidationError(f"{field} must be non-negative")
+    return result.quantize(Decimal("0.01"))
+
+
+def open_session(*, organization_id, register_id, user_id, opening_cash):
+    register = POSRegister.query.join(Store).filter(
+        POSRegister.id == register_id,
+        POSRegister.organization_id == organization_id,
+        POSRegister.active.is_(True),
+        Store.organization_id == organization_id,
+        Store.active.is_(True),
+        POSRegister.store_id == Store.id,
+    ).first()
+    if register is None:
+        raise POSValidationError("Register not found in current organization")
+    existing = CashSession.query.filter_by(
+        organization_id=organization_id, register_id=register_id, status="open"
+    ).first()
+    if existing:
+        raise POSValidationError("Register already has an open session")
+    session = CashSession(
+        organization_id=organization_id,
+        register_id=register_id,
+        opened_by=user_id,
+        opening_cash=money(opening_cash, "opening_cash"),
+    )
+    db.session.add(session)
+    db.session.commit()
+    return session
+
+
+def create_pos_sale(*, organization_id, session_id, lines, payments=None):
+    session = CashSession.query.filter_by(
+        id=session_id, organization_id=organization_id, status="open"
+    ).first()
+    if session is None:
+        raise POSValidationError("Open cash session not found")
+    if not lines:
+        raise POSValidationError("At least one POS sale line is required")
+    sale = POSSale(
+        organization_id=organization_id,
+        session=session,
+        reference=f"POS-{session.id}-{POSSale.query.filter_by(organization_id=organization_id).count() + 1}",
+        status="confirmed",
+    )
+    total = Decimal("0")
+    for item in lines:
+        product = Product.query.filter_by(
+            id=item.get("product_id"), organization_id=organization_id,
+            deleted_at=None, active=True
+        ).first()
+        if product is None:
+            raise POSValidationError("Product not found in current organization")
+        quantity = Decimal(str(item.get("quantity", 1)))
+        if quantity <= 0:
+            raise POSValidationError("quantity must be greater than zero")
+        price = money(item.get("unit_price", product.unit_price), "unit_price")
+        line_total = (quantity * price).quantize(Decimal("0.01"))
+        sale.lines.append(POSSaleLine(
+            organization_id=organization_id, product=product,
+            quantity=quantity, unit_price=price, line_total=line_total
+        ))
+        total += line_total
+    sale.total_amount = total
+    payment_total = Decimal("0")
+    for item in payments or []:
+        amount = money(item.get("amount"), "payment amount")
+        if amount <= 0:
+            raise POSValidationError("payment amount must be greater than zero")
+        if item.get("method") not in {"cash", "card", "mobile_money", "transfer"}:
+            raise POSValidationError("Invalid payment method")
+        sale.payments.append(POSPayment(
+            organization_id=organization_id, method=item["method"], amount=amount
+        ))
+        payment_total += amount
+    if payments and payment_total != total:
+        raise POSValidationError("Payments must equal the sale total")
+    db.session.add(sale)
+    db.session.commit()
+    return sale
+
+
+def close_session(*, organization_id, session_id, user_id, closing_cash):
+    session = CashSession.query.filter_by(
+        id=session_id, organization_id=organization_id, status="open"
+    ).first()
+    if session is None:
+        raise POSValidationError("Open cash session not found")
+    session.closing_cash = money(closing_cash, "closing_cash")
+    session.closed_by = user_id
+    session.closed_at = db.func.now()
+    session.status = "closed"
+    db.session.commit()
+    return session
