@@ -29,8 +29,7 @@ def stores():
     return jsonify(
         {
             "items": [
-                {"id": s.id, "name": s.name, "code": s.code}
-                for s in rows
+                {"id": s.id, "name": s.name, "code": s.code} for s in rows
             ]
         }
     )
@@ -128,7 +127,8 @@ def create_sale():
             "status": sale.status,
             "total_amount": float(sale.total_amount),
             "payments": [
-                {"method": p.method, "amount": float(p.amount)} for p in sale.payments
+                {"method": p.method, "amount": float(p.amount)}
+                for p in sale.payments
             ],
         }
     ), 201
