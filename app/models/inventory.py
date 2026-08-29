@@ -108,3 +108,57 @@ class ProductBatch(TenantAwareModel):
             name="uq_product_batch_org_product_store_batch",
         ),
     )
+
+
+class StockTransfer(TenantAwareModel):
+    __tablename__ = "stock_transfer"
+
+    source_store_id = db.Column(
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    destination_store_id = db.Column(
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    status = db.Column(db.String(30), nullable=False, default="draft", index=True)
+    reference = db.Column(db.String(100), nullable=True, index=True)
+    note = db.Column(db.Text, nullable=True)
+
+    source_store = db.relationship("Store", foreign_keys=[source_store_id])
+    destination_store = db.relationship("Store", foreign_keys=[destination_store_id])
+    items = db.relationship(
+        "StockTransferItem", back_populates="transfer", cascade="all, delete-orphan"
+    )
+
+
+class StockTransferItem(TenantAwareModel):
+    __tablename__ = "stock_transfer_item"
+
+    transfer_id = db.Column(
+        db.Integer,
+        db.ForeignKey("stock_transfer.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    product_id = db.Column(
+        db.Integer,
+        db.ForeignKey("product.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    quantity = db.Column(db.Numeric(14, 3), nullable=False)
+    batch_id = db.Column(
+        db.Integer,
+        db.ForeignKey("product_batch.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+
+    transfer = db.relationship("StockTransfer", back_populates="items")
+    product = db.relationship("Product")
+    batch = db.relationship("ProductBatch")
