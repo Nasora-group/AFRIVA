@@ -9,7 +9,39 @@ permissions:
   contents: write
 
 jobs:
+  format:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install formatters
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install black==23.7.0 isort==5.12.0
+      - name: Format source and tests
+        run: |
+          black app tests
+          isort app tests
+      - name: Commit formatting fixes
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app tests
+          git commit -m "style: apply Black and isort formatting"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   test-and-lint:
+    needs: format
+    if: always() && (needs.format.result == 'success' || needs.format.result == 'skipped')
     runs-on: ubuntu-latest
     services:
       postgres:
