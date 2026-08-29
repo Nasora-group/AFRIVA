@@ -103,7 +103,16 @@ def create_invoice():
     except (KeyError, TypeError, ValueError) as exc:
         db.session.rollback()
         return jsonify({"error": str(exc)}), 400
-    return jsonify({"id": value.id, "number": value.number, "amount": float(value.amount)}), 201
+    return (
+        jsonify(
+            {
+                "id": value.id,
+                "number": value.number,
+                "amount": float(value.amount),
+            }
+        ),
+        201,
+    )
 
 
 @billing_api.post("/invoices/<int:invoice_id>/payments")
@@ -124,11 +133,14 @@ def record_payment(invoice_id):
     invoice = Invoice.query.filter_by(
         id=invoice_id, organization_id=g.current_org_id
     ).first()
-    return jsonify(
-        {
-            "id": value.id,
-            "invoice_id": invoice_id,
-            "status": value.status,
-            "invoice_status": invoice.status,
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "id": value.id,
+                "invoice_id": invoice_id,
+                "status": value.status,
+                "invoice_status": invoice.status,
+            }
+        ),
+        201,
+    )
