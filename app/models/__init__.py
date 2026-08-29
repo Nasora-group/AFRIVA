@@ -16,6 +16,7 @@ from .crm import (
 )
 from .organization import Organization
 from .role import Permission, Role, role_permission
+from .sales import Product, Sale, SaleLine, SalesTarget
 from .user import OrganizationUser, User
 
 __all__ = [
@@ -42,4 +43,8 @@ __all__ = [
     "TourStop",
     "Task",
     "Note",
+    "Product",
+    "Sale",
+    "SaleLine",
+    "SalesTarget",
 ]
