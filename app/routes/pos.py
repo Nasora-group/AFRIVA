@@ -19,7 +19,9 @@ pos_bp = Blueprint("pos", __name__, url_prefix="/api/pos")
 def stores():
     rows = (
         Store.query.filter_by(
-            organization_id=g.current_org_id, deleted_at=None, active=True
+            organization_id=g.current_org_id,
+            deleted_at=None,
+            active=True,
         )
         .order_by(Store.name)
         .all()
@@ -34,7 +36,9 @@ def stores():
 def registers():
     rows = (
         POSRegister.query.filter_by(
-            organization_id=g.current_org_id, deleted_at=None, active=True
+            organization_id=g.current_org_id,
+            deleted_at=None,
+            active=True,
         )
         .order_by(POSRegister.name)
         .all()
