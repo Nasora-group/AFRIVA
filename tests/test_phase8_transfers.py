@@ -28,7 +28,10 @@ def test_transfer_moves_stock_between_stores(app, monkeypatch, inventory_context
     db.session.commit()
 
     assert transfer.status == "completed"
-    assert ProductStock.query.filter_by(store_id=source.id).one().quantity == Decimal("6")
+    assert (
+        ProductStock.query.filter_by(store_id=source.id).one().quantity
+        == Decimal("6")
+    )
     assert (
         ProductStock.query.filter_by(store_id=destination.id).one().quantity
         == Decimal("4")
