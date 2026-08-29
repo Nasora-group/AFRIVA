@@ -41,10 +41,15 @@ def inventory_context(app):
     organization = Organization(name="Inventory Test Org", slug="inventory-test-org")
     db.session.add(organization)
     db.session.flush()
-    store = Store(
+    source = Store(
         organization_id=organization.id,
         name="Main Store",
         code="MAIN",
+    )
+    destination = Store(
+        organization_id=organization.id,
+        name="Secondary Store",
+        code="SECONDARY",
     )
     product = Product(
         organization_id=organization.id,
@@ -53,7 +58,7 @@ def inventory_context(app):
         purchase_price=Decimal("5.00"),
         unit_price=Decimal("10.00"),
     )
-    db.session.add_all([store, product])
+    db.session.add_all([source, destination, product])
     db.session.commit()
     g.current_organization = organization
-    return organization, store, product
+    return organization, source, destination, product
