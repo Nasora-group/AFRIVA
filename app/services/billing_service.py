@@ -66,6 +66,69 @@ class BillingService:
         db.session.flush()
         return subscription
 
+    def refresh_subscription_status(self, subscription=None):
+        """Expire trial or period when its contractual end is reached."""
+        organization_id = self._organization_id()
+        if subscription is None:
+            subscription = (
+                Subscription.query.filter_by(
+                    organization_id=organization_id, status="trialing"
+                ).first()
+                or Subscription.query.filter_by(
+                    organization_id=organization_id, status="active"
+                ).first()
+            )
+        if subscription is None:
+            return None
+        now = utcnow()
+        changed = False
+        if (
+            subscription.status == "trialing"
+            and subscription.trial_ends_at
+            and now >= subscription.trial_ends_at
+        ):
+            subscription.status = "expired"
+            changed = True
+        elif (
+            subscription.status == "active"
+            and subscription.current_period_end
+            and now >= subscription.current_period_end
+        ):
+            subscription.status = "expired"
+            changed = True
+        if changed:
+            db.session.flush()
+        return subscription
+
+    def change_plan(self, plan_code, interval="monthly", trial=False):
+        """Change the current tenant plan and start a fresh billing period."""
+        organization_id = self._organization_id()
+        if interval not in {"monthly", "yearly"}:
+            raise ValueError("Unsupported billing interval")
+        plan = Plan.query.filter_by(code=plan_code, active=True).first()
+        if plan is None:
+            raise ValueError("Active plan not found")
+        subscription = (
+            Subscription.query.filter_by(
+                organization_id=organization_id, status="active"
+            ).first()
+            or Subscription.query.filter_by(
+                organization_id=organization_id, status="trialing"
+            ).first()
+        )
+        if subscription is None:
+            return self.create_subscription(plan_code, interval, trial)
+        now = utcnow()
+        subscription.plan_id = plan.id
+        subscription.billing_interval = interval
+        subscription.status = "trialing" if trial and plan.trial_days > 0 else "active"
+        subscription.trial_ends_at = now + timedelta(days=plan.trial_days) if subscription.status == "trialing" else None
+        subscription.current_period_start = now
+        subscription.current_period_end = self._period_end(now, interval)
+        subscription.canceled_at = None
+        db.session.flush()
+        return subscription
+
     def cancel_subscription(self, subscription_id):
         organization_id = self._organization_id()
         subscription = Subscription.query.filter_by(
