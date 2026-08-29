@@ -4,7 +4,12 @@ from flask import Blueprint, g, jsonify, request
 
 from app.auth import login_required
 from app.models import CashSession, POSRegister, Store
-from app.services.pos_service import POSValidationError, close_session, create_pos_sale, open_session
+from app.services.pos_service import (
+    POSValidationError,
+    close_session,
+    create_pos_sale,
+    open_session,
+)
 
 pos_bp = Blueprint("pos", __name__, url_prefix="/api/pos")
 
