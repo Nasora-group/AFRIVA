@@ -1,9 +1,7 @@
 """SaaS plan, subscription and tenant quota enforcement."""
 
-from sqlalchemy import func
-
 from app.middleware.tenant_middleware import get_current_org_id
-from app.models import OrganizationUser, Plan, Product, Store, Subscription, db
+from app.models import OrganizationUser, Plan, Product, Store, Subscription
 from app.models.base import utcnow
 
 
@@ -19,7 +17,7 @@ class SaaSService:
 
     def subscription(self):
         organization_id = self.organization_id()
-        value = (
+        return (
             Subscription.query.filter(
                 Subscription.organization_id == organization_id,
                 Subscription.status.in_(("active", "trialing")),
@@ -28,7 +26,6 @@ class SaaSService:
             .order_by(Subscription.id.desc())
             .first()
         )
-        return value
 
     def plan(self):
         subscription = self.subscription()
