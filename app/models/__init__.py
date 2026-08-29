@@ -3,7 +3,17 @@
 from .activity_log import ActivityLog
 from .base import BaseModel, TenantAwareModel, db
 from .billing import BillingPayment, Invoice, Plan, Subscription
-from .crm import Client, Commercial, Note, Prospect, Prospection, Task, Tour, TourStop, Visit
+from .crm import (
+    Client,
+    Commercial,
+    Note,
+    Prospect,
+    Prospection,
+    Task,
+    Tour,
+    TourStop,
+    Visit,
+)
 from .organization import Organization
 from .pos import CashSession, POSPayment, POSRegister, POSSale, POSSaleLine, Store
 from .role import Permission, Role, role_permission
