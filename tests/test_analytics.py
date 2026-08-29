@@ -1,4 +1,4 @@
-from app.models import Client, Commercial, Prospection, Prospect, Sale, db
+from app.models import Client, Commercial, Prospect, Prospection, Sale, db
 
 
 def test_analytics_summary_is_tenant_scoped(app, tenant, monkeypatch):

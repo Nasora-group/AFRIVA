@@ -1,5 +1,5 @@
-from decimal import Decimal
 from datetime import date, timedelta
+from decimal import Decimal
 
 from app.models import ProductBatch, ProductStock, StockMovement, db
 from app.services.inventory_service import InventoryService
@@ -28,8 +28,12 @@ def test_transfer_moves_stock_between_stores(app, monkeypatch, inventory_context
     db.session.commit()
 
     assert transfer.status == "completed"
-    assert ProductStock.query.filter_by(store_id=source.id).one().quantity == Decimal("6")
-    assert ProductStock.query.filter_by(store_id=destination.id).one().quantity == Decimal("4")
+    assert ProductStock.query.filter_by(store_id=source.id).one().quantity == Decimal(
+        "6"
+    )
+    assert ProductStock.query.filter_by(
+        store_id=destination.id
+    ).one().quantity == Decimal("4")
     assert StockMovement.query.filter_by(reference_id=transfer.id).count() == 2
 
 
@@ -65,5 +69,9 @@ def test_fefo_consumes_earliest_expiring_batch(app, monkeypatch, inventory_conte
 
     assert allocations[0]["quantity"] == Decimal("3")
     assert allocations[1]["quantity"] == Decimal("1")
-    assert ProductBatch.query.filter_by(batch_number="EARLY").one().quantity == Decimal("0")
-    assert ProductBatch.query.filter_by(batch_number="LATE").one().quantity == Decimal("4")
+    assert ProductBatch.query.filter_by(batch_number="EARLY").one().quantity == Decimal(
+        "0"
+    )
+    assert ProductBatch.query.filter_by(batch_number="LATE").one().quantity == Decimal(
+        "4"
+    )

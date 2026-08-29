@@ -2,15 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.models import (
-    CashSession,
-    POSRegister,
-    Product,
-    ProductStock,
-    Store,
-    User,
-    db,
-)
+from app.models import CashSession, POSRegister, Product, ProductStock, Store, User, db
 from app.services.pos_service import POSValidationError, create_pos_sale, open_session
 
 
@@ -70,7 +62,9 @@ def test_pos_sale_consumes_store_stock(app, tenant):
 
 def test_pos_sale_rejects_insufficient_stock_without_sale(app, tenant):
     user = User(email="cashier2@example.com", password_hash="test")
-    store = Store(organization_id=tenant.id, name="Touba Store", code="TOU", active=True)
+    store = Store(
+        organization_id=tenant.id, name="Touba Store", code="TOU", active=True
+    )
     register = POSRegister(
         organization_id=tenant.id,
         store=store,

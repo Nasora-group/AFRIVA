@@ -1,12 +1,12 @@
 from decimal import Decimal
 
-from app.models import BillingPayment, Invoice, Plan, Subscription, db
+from app.models import Invoice, Plan, db
 from app.services.billing_service import BillingService
 
 
 def test_billing_lifecycle_and_tenant_isolation(app, inventory_context, monkeypatch):
     organization = inventory_context[0]
-    other_organization = type(organization)(name="Other Org")
+    other_organization = type(organization)(name="Other Org", slug="other-org-e2e")
     db.session.add(other_organization)
     db.session.flush()
     plan = Plan(
@@ -24,7 +24,8 @@ def test_billing_lifecycle_and_tenant_isolation(app, inventory_context, monkeypa
     db.session.add(plan)
     db.session.commit()
     monkeypatch.setattr(
-        "app.services.billing_service.get_current_organization", lambda: organization
+        "app.services.billing_service.get_current_organization",
+        lambda: organization,
     )
 
     service = BillingService()

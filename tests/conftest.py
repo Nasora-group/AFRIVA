@@ -1,10 +1,12 @@
 """Pytest configuration for isolated AFRIVA service tests."""
 
+from decimal import Decimal
+
 import pytest
 from flask import g
 
 from app import create_app
-from app.models import db
+from app.models import Product, Store, db
 from app.models.organization import Organization
 
 
@@ -32,3 +34,31 @@ def tenant(app):
     db.session.commit()
     g.current_organization = organization
     return organization
+
+
+@pytest.fixture
+def inventory_context(app):
+    organization = Organization(name="Inventory Test Org", slug="inventory-test-org")
+    db.session.add(organization)
+    db.session.flush()
+    source = Store(
+        organization_id=organization.id,
+        name="Main Store",
+        code="MAIN",
+    )
+    destination = Store(
+        organization_id=organization.id,
+        name="Secondary Store",
+        code="SECONDARY",
+    )
+    product = Product(
+        organization_id=organization.id,
+        name="Test Product",
+        sku="TEST-001",
+        purchase_price=Decimal("5.00"),
+        unit_price=Decimal("10.00"),
+    )
+    db.session.add_all([source, destination, product])
+    db.session.commit()
+    g.current_organization = organization
+    return organization, source, destination, product
