@@ -25,8 +25,8 @@ def create_app(config_object=Config):
     from .api.billing import billing_api
     from .api.inventory import inventory_api
     from .api.transfers import transfers_api
-    from .auth import load_current_user
-    from .middleware.tenant_middleware import load_tenant_context
+    from . import auth
+    from .middleware import tenant_middleware
     from .routes.pos import pos_bp
     from .routes.sales import sales_bp
 
@@ -41,8 +41,8 @@ def create_app(config_object=Config):
     def security_context():
         if request.path in {"/", "/health"}:
             return None
-        load_current_user()
-        load_tenant_context()
+        auth.load_current_user()
+        tenant_middleware.load_tenant_context()
         return None
 
     return app
