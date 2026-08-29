@@ -1,6 +1,6 @@
 """Business rules for POS and cash sessions."""
 
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from app.models import POSPayment, POSSale, POSSaleLine, POSRegister, CashSession, Product, Store, db
 
@@ -16,7 +16,7 @@ def money(value, field="amount"):
         raise POSValidationError(f"{field} must be a valid number") from exc
     if result < 0:
         raise POSValidationError(f"{field} must be non-negative")
-    return result.quantize(Decimal("0.01"))
+    return result.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def open_session(*, organization_id, register_id, user_id, opening_cash):
