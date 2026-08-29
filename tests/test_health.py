@@ -6,9 +6,7 @@ def test_health_endpoint_is_public(app):
 
 
 def test_index_endpoint_is_public(app):
-    response = app.test_client().get("/")
+    response = app.test_client().get("/", follow_redirects=False)
 
-    assert response.status_code == 200
-    assert response.content_type.startswith("text/html")
-    assert b"AFRIVA SAAS" in response.data
-    assert b"Gestion commerciale" in response.data
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/login")
