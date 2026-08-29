@@ -1,9 +1,24 @@
 """Server-side tenant context. Never trust organization_id from request input."""
 
 from flask import abort, g, session
+from sqlalchemy import text
 
 from app.models.organization import Organization
 from app.models.user import OrganizationUser
+from app.models import db
+
+
+def _set_rls_context(user_id, organization_id=None):
+    """Set PostgreSQL RLS context on the current SQLAlchemy connection."""
+    db.session.execute(
+        text("SELECT set_config('app.current_user_id', :value, false)"),
+        {"value": str(user_id)},
+    )
+    if organization_id is not None:
+        db.session.execute(
+            text("SELECT set_config('app.current_organization_id', :value, false)"),
+            {"value": str(organization_id)},
+        )
 
 
 def load_tenant_context():
@@ -12,6 +27,7 @@ def load_tenant_context():
         return
 
     org_id = session.get("current_org_id")
+    _set_rls_context(user.id, org_id)
     membership = None
 
     if org_id is not None:
@@ -33,6 +49,7 @@ def load_tenant_context():
     if organization is None or organization.status in {"suspended", "deleted"}:
         abort(403)
 
+    _set_rls_context(user.id, organization.id)
     session["current_org_id"] = organization.id
     g.current_membership = membership
     g.current_organization = organization
