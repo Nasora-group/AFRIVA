@@ -1,7 +1,7 @@
 """SaaS plan, subscription and tenant quota enforcement."""
 
 from app.middleware.tenant_middleware import get_current_org_id
-from app.models import OrganizationUser, Plan, Product, Store, Subscription
+from app.models import OrganizationUser, Product, Store, Subscription
 from app.models.base import utcnow
 
 
