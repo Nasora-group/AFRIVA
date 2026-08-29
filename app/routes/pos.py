@@ -24,7 +24,9 @@ def stores():
         .order_by(Store.name)
         .all()
     )
-    return jsonify({"items": [{"id": s.id, "name": s.name, "code": s.code} for s in rows]})
+    return jsonify(
+        {"items": [{"id": s.id, "name": s.name, "code": s.code} for s in rows]}
+    )
 
 
 @pos_bp.get("/registers")
