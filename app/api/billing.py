@@ -24,6 +24,23 @@ def _plan_json(plan):
     }
 
 
+def _subscription_json(value):
+    if value is None:
+        return None
+    return {
+        "id": value.id,
+        "plan": value.plan.code,
+        "plan_name": value.plan.name,
+        "status": value.status,
+        "billing_interval": value.billing_interval,
+        "trial_ends_at": value.trial_ends_at.isoformat()
+        if value.trial_ends_at
+        else None,
+        "current_period_start": value.current_period_start.isoformat(),
+        "current_period_end": value.current_period_end.isoformat(),
+    }
+
+
 @billing_api.get("/plans")
 def plans():
     rows = Plan.query.filter_by(active=True).order_by(Plan.monthly_price, Plan.id).all()
@@ -33,6 +50,7 @@ def plans():
 @billing_api.get("/subscription")
 @login_required
 def subscription():
+    service = BillingService()
     value = (
         Subscription.query.filter_by(
             organization_id=g.current_org_id, status="active"
@@ -41,24 +59,12 @@ def subscription():
             organization_id=g.current_org_id, status="trialing"
         ).first()
     )
-    if value is None:
-        return jsonify({"subscription": None})
-    return jsonify(
-        {
-            "subscription": {
-                "id": value.id,
-                "plan": value.plan.code,
-                "plan_name": value.plan.name,
-                "status": value.status,
-                "billing_interval": value.billing_interval,
-                "trial_ends_at": value.trial_ends_at.isoformat()
-                if value.trial_ends_at
-                else None,
-                "current_period_start": value.current_period_start.isoformat(),
-                "current_period_end": value.current_period_end.isoformat(),
-            }
-        }
-    )
+    if value is not None:
+        value = service.refresh_subscription_status(value)
+        db.session.commit()
+    if value is not None and value.status == "expired":
+        value = None
+    return jsonify({"subscription": _subscription_json(value)})
 
 
 @billing_api.get("/invoices")
@@ -104,6 +110,23 @@ def create_subscription():
         db.session.rollback()
         return jsonify({"error": str(exc)}), 400
     return jsonify({"id": value.id, "status": value.status}), 201
+
+
+@billing_api.patch("/subscriptions")
+@login_required
+def change_subscription():
+    payload = request.get_json(silent=True) or {}
+    try:
+        value = BillingService().change_plan(
+            plan_code=payload["plan_code"],
+            interval=payload.get("interval", "monthly"),
+            trial=bool(payload.get("trial", False)),
+        )
+        db.session.commit()
+    except (KeyError, TypeError, ValueError) as exc:
+        db.session.rollback()
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"subscription": _subscription_json(value)}), 200
 
 
 @billing_api.post("/subscriptions/<int:subscription_id>/cancel")
