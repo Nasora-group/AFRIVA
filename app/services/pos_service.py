@@ -1,13 +1,13 @@
 """Business rules for POS and cash sessions."""
 
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 from app.models import (
+    CashSession,
     POSPayment,
+    POSRegister,
     POSSale,
     POSSaleLine,
-    POSRegister,
-    CashSession,
     Product,
     Store,
     db,
