@@ -48,6 +48,7 @@ def subscription():
             "subscription": {
                 "id": value.id,
                 "plan": value.plan.code,
+                "plan_name": value.plan.name,
                 "status": value.status,
                 "billing_interval": value.billing_interval,
                 "trial_ends_at": value.trial_ends_at.isoformat()
@@ -56,6 +57,34 @@ def subscription():
                 "current_period_start": value.current_period_start.isoformat(),
                 "current_period_end": value.current_period_end.isoformat(),
             }
+        }
+    )
+
+
+@billing_api.get("/invoices")
+@login_required
+def invoices():
+    rows = (
+        Invoice.query.filter_by(organization_id=g.current_org_id)
+        .order_by(Invoice.issued_at.desc(), Invoice.id.desc())
+        .limit(100)
+        .all()
+    )
+    return jsonify(
+        {
+            "items": [
+                {
+                    "id": row.id,
+                    "number": row.number,
+                    "status": row.status,
+                    "amount": float(row.amount),
+                    "currency": row.currency,
+                    "issued_at": row.issued_at.isoformat(),
+                    "due_at": row.due_at.isoformat() if row.due_at else None,
+                    "paid_at": row.paid_at.isoformat() if row.paid_at else None,
+                }
+                for row in rows
+            ]
         }
     )
 
