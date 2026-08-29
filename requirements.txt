@@ -1,4 +1,4 @@
-# AFRIVA SaaS - Phase 3 compatible baseline
+# AFRIVA SaaS runtime
 Flask==2.3.2
 Flask-SQLAlchemy==3.0.5
 SQLAlchemy==2.0.50
@@ -8,7 +8,7 @@ Werkzeug==2.3.7
 python-dotenv==1.0.1
 gunicorn==22.0.0
 
-# Test / quality
+# Test and quality
 pytest==7.4.0
 pytest-cov==4.1.0
 pytest-flask==1.2.0
@@ -16,5 +16,5 @@ flake8==6.0.0
 black==23.7.0
 isort==5.12.0
 
-# Phase 4 dependencies are intentionally deferred until the Phase 3
-# security foundation is green in CI.
+# Security/runtime support
+cryptography==42.0.8
