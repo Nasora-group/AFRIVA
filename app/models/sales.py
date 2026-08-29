@@ -8,11 +8,22 @@ class Product(TenantAwareModel):
 
     name = db.Column(db.String(255), nullable=False)
     sku = db.Column(db.String(100), nullable=True, index=True)
+    barcode = db.Column(db.String(100), nullable=True, index=True)
     category = db.Column(db.String(100))
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("product_category.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    purchase_price = db.Column(db.Numeric(12, 2), nullable=False, default=0)
     unit = db.Column(db.String(50), nullable=False, default="unit")
     unit_price = db.Column(db.Numeric(14, 2), nullable=False, default=0)
+    tax_rate = db.Column(db.Numeric(5, 2), nullable=False, default=0)
     active = db.Column(db.Boolean, nullable=False, default=True, index=True)
     description = db.Column(db.Text)
+
+    category_ref = db.relationship("ProductCategory", foreign_keys=[category_id])
 
 
 class Sale(TenantAwareModel):
@@ -30,6 +41,12 @@ class Sale(TenantAwareModel):
         nullable=True,
         index=True,
     )
+    store_id = db.Column(
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     sold_at = db.Column(
         db.DateTime(timezone=True), nullable=False, default=utcnow, index=True
     )
@@ -39,6 +56,7 @@ class Sale(TenantAwareModel):
 
     commercial = db.relationship("Commercial")
     client = db.relationship("Client")
+    store = db.relationship("Store")
     lines = db.relationship(
         "SaleLine", back_populates="sale", cascade="all, delete-orphan"
     )
