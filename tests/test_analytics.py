@@ -1,33 +1,33 @@
-from app.models import Client, Commercial, Prospection, Product, Sale, db
+from app.models import Client, Commercial, Prospection, Prospect, Sale, db
 
 
-def test_analytics_summary_is_tenant_scoped(app, inventory_context, monkeypatch):
-    org, _, _, product = inventory_context
+def test_analytics_summary_is_tenant_scoped(app, tenant, monkeypatch):
+    org = tenant
     commercial = Commercial(
         organization_id=org.id, first_name="A", last_name="Commercial"
     )
     client = Client(organization_id=org.id, name="Client BI")
-    db.session.add_all([commercial, client])
+    prospect = Prospect(organization_id=org.id, name="Prospect BI")
+    db.session.add_all([commercial, client, prospect])
     db.session.flush()
-    sale = Sale(
-        organization_id=org.id,
-        commercial_id=commercial.id,
-        client_id=client.id,
-        status="completed",
-        total_amount=12500,
+    db.session.add(
+        Sale(
+            organization_id=org.id,
+            commercial_id=commercial.id,
+            client_id=client.id,
+            status="completed",
+            total_amount=12500,
+        )
     )
-    db.session.add(sale)
     db.session.add(
         Prospection(
             organization_id=org.id,
             commercial_id=commercial.id,
-            prospect_id=inventory_context[4].id,
+            prospect_id=prospect.id,
         )
     )
     db.session.commit()
-    monkeypatch.setattr(
-        "app.api.analytics.get_current_organization", lambda: org
-    )
+    monkeypatch.setattr("app.api.analytics.get_current_organization", lambda: org)
 
     response = app.test_client().get("/api/v1/analytics/summary?period=all")
 
