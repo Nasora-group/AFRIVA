@@ -43,7 +43,7 @@
 
 ### Validation opérationnelle
 
-Le code et les fichiers de validation sont présents. La validation finale dépend de l'exécution du workflow GitHub Actions dans GitHub avec PostgreSQL.
+Le socle est implémenté et les derniers commits ont porté sur la conformité de formatage Python. La validation finale est exécutée par GitHub Actions sur cette branche/PR avec PostgreSQL éphémère.
 
 Runbook : `docs/PHASE_3_RUNBOOK.md`
 
@@ -51,14 +51,12 @@ Runbook : `docs/PHASE_3_RUNBOOK.md`
 
 La Phase 4 CRM/POS/Stock ne doit commencer que lorsque GitHub Actions confirme :
 
-- tests verts ;
-- coverage >= 80 % ;
-- lint vert ;
-- tests PostgreSQL Org A / Org B verts ;
-- RLS validée ;
-- aucun accès cross-tenant ;
-- aucune commande exécutée contre la production.
+- [ ] tests verts ;
+- [ ] coverage >= 80 % ;
+- [ ] lint vert ;
+- [ ] tests PostgreSQL Org A / Org B verts ;
+- [ ] RLS validée ;
+- [ ] aucun accès cross-tenant ;
+- [ ] aucune commande exécutée contre la production.
 
-**Statut : SOCLE PHASE 3 PRÊT POUR VALIDATION CI.**
-
-La Phase 3 ne sera déclarée « validée » qu'après le premier workflow CI vert.
+**Statut : SOCLE PHASE 3 — VALIDATION CI EN COURS.**

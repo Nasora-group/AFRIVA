@@ -43,7 +43,5 @@ class OrganizationUser(BaseModel):
     status = db.Column(db.String(50), default="active", nullable=False, index=True)
 
     user = db.relationship("User", back_populates="organization_users")
-    organization = db.relationship(
-        "Organization", backref=db.backref("memberships", lazy=True)
-    )
+    organization = db.relationship("Organization", backref=db.backref("memberships", lazy=True))
     role = db.relationship("Role", back_populates="memberships")
