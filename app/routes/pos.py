@@ -27,7 +27,11 @@ def stores():
         .all()
     )
     return jsonify(
-        {"items": [{"id": s.id, "name": s.name, "code": s.code} for s in rows]}
+        {
+            "items": [
+                {"id": s.id, "name": s.name, "code": s.code} for s in rows
+            ],
+        }
     )
 
 
@@ -53,7 +57,7 @@ def registers():
                     "code": r.code,
                 }
                 for r in rows
-            ]
+            ],
         }
     )
 
@@ -149,6 +153,6 @@ def sessions():
                     "closing_cash": float(s.closing_cash or 0),
                 }
                 for s in rows
-            ]
+            ],
         }
     )
