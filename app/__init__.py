@@ -1,6 +1,6 @@
 """AFRIVA Flask application factory."""
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 
 from .config import Config
 from .models import db
@@ -18,8 +18,8 @@ def create_app(config_object=Config):
 
     @app.get("/")
     def index():
-        """Basic service endpoint for smoke tests."""
-        return jsonify({"service": "AFRIVA", "status": "ok"}), 200
+        """Public AFRIVA web landing page."""
+        return render_template("index.html")
 
     from . import auth
     from .api.analytics import analytics_api
