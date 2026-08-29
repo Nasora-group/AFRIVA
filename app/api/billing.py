@@ -5,6 +5,7 @@ from flask import Blueprint, g, jsonify, request
 from app.auth import login_required
 from app.models import Invoice, Plan, Subscription, db
 from app.services.billing_service import BillingService
+from app.services.saas_service import SaaSService
 
 billing_api = Blueprint("billing_api", __name__, url_prefix="/api/v1/billing")
 
@@ -65,6 +66,13 @@ def subscription():
     if value is not None and value.status == "expired":
         value = None
     return jsonify({"subscription": _subscription_json(value)})
+
+
+@billing_api.get("/usage")
+@login_required
+def usage():
+    """Return tenant-scoped quota usage and limits."""
+    return jsonify(SaaSService().snapshot())
 
 
 @billing_api.get("/invoices")
