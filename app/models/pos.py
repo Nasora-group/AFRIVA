@@ -18,7 +18,10 @@ class POSRegister(TenantAwareModel):
     __tablename__ = "pos_register"
 
     store_id = db.Column(
-        db.Integer, db.ForeignKey("store.id", ondelete="RESTRICT"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("store.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     name = db.Column(db.String(100), nullable=False)
     code = db.Column(db.String(100), nullable=False, index=True)
