@@ -13,20 +13,20 @@ def create_app(config_object=Config):
 
     @app.get("/health")
     def health():
-        """Lightweight Render readiness endpoint."""
+        """Lightweight readiness endpoint."""
         return jsonify({"status": "ok"}), 200
 
     @app.get("/")
     def index():
-        """Basic service endpoint for smoke tests and browser access."""
+        """Basic service endpoint for smoke tests."""
         return jsonify({"service": "AFRIVA", "status": "ok"}), 200
 
-    from .auth import load_current_user
-    from .middleware.tenant_middleware import load_tenant_context
     from .api.analytics import analytics_api
     from .api.billing import billing_api
     from .api.inventory import inventory_api
     from .api.transfers import transfers_api
+    from .auth import load_current_user
+    from .middleware.tenant_middleware import load_tenant_context
     from .routes.pos import pos_bp
     from .routes.sales import sales_bp
 
@@ -39,7 +39,7 @@ def create_app(config_object=Config):
 
     @app.before_request
     def security_context():
-        if request.path == "/health":
+        if request.path in {"/", "/health"}:
             return None
         load_current_user()
         load_tenant_context()
