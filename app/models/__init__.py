@@ -15,6 +15,7 @@ from .crm import (
     Visit,
 )
 from .organization import Organization
+from .pos import CashSession, POSPayment, POSRegister, POSSale, POSSaleLine, Store
 from .role import Permission, Role, role_permission
 from .sales import Product, Sale, SaleLine, SalesTarget
 from .user import OrganizationUser, User
@@ -47,4 +48,10 @@ __all__ = [
     "Sale",
     "SaleLine",
     "SalesTarget",
+    "Store",
+    "POSRegister",
+    "CashSession",
+    "POSSale",
+    "POSSaleLine",
+    "POSPayment",
 ]
