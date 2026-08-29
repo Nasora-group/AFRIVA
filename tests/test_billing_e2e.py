@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from app.models import BillingPayment, Invoice, Plan, Subscription, db
+from app.models import Invoice, Plan, db
 from app.services.billing_service import BillingService
 
 
