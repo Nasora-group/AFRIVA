@@ -14,7 +14,14 @@ from .crm import (
     TourStop,
     Visit,
 )
-from .inventory import ProductBatch, ProductCategory, ProductStock, StockMovement
+from .inventory import (
+    ProductBatch,
+    ProductCategory,
+    ProductStock,
+    StockMovement,
+    StockTransfer,
+    StockTransferItem,
+)
 from .organization import Organization
 from .pos import CashSession, POSPayment, POSRegister, POSSale, POSSaleLine, Store
 from .role import Permission, Role, role_permission
@@ -53,6 +60,8 @@ __all__ = [
     "ProductStock",
     "StockMovement",
     "ProductBatch",
+    "StockTransfer",
+    "StockTransferItem",
     "Store",
     "POSRegister",
     "CashSession",
