@@ -1,1 +1,74 @@
-{% extends "base.html" %}{% block title %}Billing — AFRIVA{% endblock %}{% block heading %}Billing{% endblock %}{% block content %}<div class="grid"><div class="card"><h3>Abonnement</h3><div class="value" id="sub">—</div><div class="muted" id="period"></div></div><div class="card"><h3>Factures</h3><div class="value" id="invoices">—</div></div><div class="card"><h3>Plans disponibles</h3><div class="value" id="plans">—</div></div></div><div class="card" style="margin-top:18px"><h3>Plans</h3><div id="planList" class="grid"></div><div id="msg"></div></div>{% endblock %}{% block scripts %}<script>Promise.all([fetch('/api/v1/billing/plans'),fetch('/api/v1/billing/subscription')]).then(async rs=>{if(rs.some(r=>!r.ok))throw 0;return Promise.all(rs.map(r=>r.json()))}).then(([p,s])=>{plans.textContent=p.items.length;invoices.textContent='—';sub.textContent=s.subscription?s.subscription.plan:'Aucun';period.textContent=s.subscription?s.subscription.status:'';planList.innerHTML=p.items.map(x=>`<div class="card"><h3>${x.name}</h3><p>${x.description||''}</p><strong>${x.monthly_price.toLocaleString('fr-FR')} €/mois</strong><p class="small">${x.max_users} utilisateurs · ${x.max_stores} magasins · ${x.max_products} produits</p></div>`).join('')}).catch(()=>msg.innerHTML='<div class="error">Impossible de charger Billing.</div>');</script>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Billing SaaS — AFRIVA{% endblock %}
+{% block heading %}Billing SaaS{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="card"><h3>Entreprise</h3><div class="value">{{ organization.name }}</div><div class="muted">Espace SaaS isolé</div></div>
+  <div class="card"><h3>Abonnement</h3><div class="value" id="sub">—</div><div class="muted" id="period">—</div></div>
+  <div class="card"><h3>Factures</h3><div class="value" id="invoiceCount">—</div><div class="muted">Historique de facturation</div></div>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+    <div><h3 style="margin-bottom:4px">Plans AFRIVA</h3><div class="muted">Choisissez l'offre adaptée à votre entreprise.</div></div>
+    <select id="interval" style="padding:10px;border-radius:8px"><option value="monthly">Mensuel</option><option value="yearly">Annuel</option></select>
+  </div>
+  <div id="planList" class="grid" style="margin-top:16px"></div>
+  <div id="msg" style="margin-top:12px"></div>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <h3>Factures</h3>
+  <div id="invoiceList" class="muted">Chargement…</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const $ = id => document.getElementById(id);
+const money = (value, currency='XOF') => new Intl.NumberFormat('fr-FR',{style:'currency',currency,maximumFractionDigits:0}).format(value);
+async function getJson(url, options={}) {
+  const r = await fetch(url, options);
+  const data = await r.json().catch(()=>({error:'Réponse invalide du serveur'}));
+  if (!r.ok) throw new Error(data.error || `Erreur ${r.status}`);
+  return data;
+}
+async function loadBilling() {
+  try {
+    const [plans, sub, invoices] = await Promise.all([
+      getJson('/api/v1/billing/plans'),
+      getJson('/api/v1/billing/subscription'),
+      getJson('/api/v1/billing/invoices')
+    ]);
+    $('sub').textContent = sub.subscription ? `${sub.subscription.plan_name} (${sub.subscription.status})` : 'Aucun abonnement';
+    $('period').textContent = sub.subscription ? `Période ${new Date(sub.subscription.current_period_end).toLocaleDateString('fr-FR')}` : 'Sélectionnez un plan';
+    $('invoiceCount').textContent = invoices.items.length;
+    renderPlans(plans.items, sub.subscription);
+    renderInvoices(invoices.items);
+  } catch (e) { $('msg').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+function renderPlans(plans, current) {
+  const interval = $('interval').value;
+  $('planList').innerHTML = plans.map(p => {
+    const price = interval === 'yearly' ? p.yearly_price : p.monthly_price;
+    const suffix = interval === 'yearly' ? '/an' : '/mois';
+    const limits = [p.max_users == null ? 'Utilisateurs illimités' : `${p.max_users} utilisateurs`, p.max_stores == null ? 'Magasins illimités' : `${p.max_stores} magasins`, p.max_products == null ? 'Produits illimités' : `${p.max_products} produits`];
+    const selected = current && current.plan === p.code;
+    return `<div class="card"><h3>${p.name}</h3><p>${p.description || ''}</p><div class="value">${money(price)} <span class="small">${suffix}</span></div><p class="small">${limits.join(' · ')}</p>${selected ? '<strong>✓ Plan actuel</strong>' : `<button type="button" onclick="choosePlan('${p.code}')">Choisir ce plan</button>`}</div>`;
+  }).join('');
+}
+async function choosePlan(code) {
+  $('msg').textContent = 'Activation de l’abonnement…';
+  try {
+    await getJson('/api/v1/billing/subscriptions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan_code:code,interval:$('interval').value,trial:true})});
+    $('msg').innerHTML = '<div class="success">Abonnement activé avec succès.</div>';
+    await loadBilling();
+  } catch(e) { $('msg').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+function renderInvoices(items) {
+  if (!items.length) { $('invoiceList').textContent = 'Aucune facture pour le moment.'; return; }
+  $('invoiceList').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Numéro</th><th>Montant</th><th>Statut</th><th>Émise le</th></tr></thead><tbody>${items.map(i=>`<tr><td>${i.number}</td><td>${money(i.amount,i.currency)}</td><td>${i.status}</td><td>${new Date(i.issued_at).toLocaleDateString('fr-FR')}</td></tr>`).join('')}</tbody></table></div>`;
+}
+$('interval').addEventListener('change', loadBilling);
+loadBilling();
+</script>
+{% endblock %}
