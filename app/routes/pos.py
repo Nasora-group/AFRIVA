@@ -73,14 +73,17 @@ def open_cash_session():
         )
     except POSValidationError as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify(
-        {
-            "id": value.id,
-            "register_id": value.register_id,
-            "status": value.status,
-            "opening_cash": float(value.opening_cash),
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "id": value.id,
+                "register_id": value.register_id,
+                "status": value.status,
+                "opening_cash": float(value.opening_cash),
+            }
+        ),
+        201,
+    )
 
 
 @pos_bp.post("/sessions/<int:session_id>/close")
@@ -118,18 +121,21 @@ def create_sale():
         )
     except (POSValidationError, TypeError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify(
-        {
-            "id": sale.id,
-            "reference": sale.reference,
-            "status": sale.status,
-            "total_amount": float(sale.total_amount),
-            "payments": [
-                {"method": p.method, "amount": float(p.amount)}
-                for p in sale.payments
-            ],
-        }
-    ), 201
+    return (
+        jsonify(
+            {
+                "id": sale.id,
+                "reference": sale.reference,
+                "status": sale.status,
+                "total_amount": float(sale.total_amount),
+                "payments": [
+                    {"method": p.method, "amount": float(p.amount)}
+                    for p in sale.payments
+                ],
+            }
+        ),
+        201,
+    )
 
 
 @pos_bp.get("/sessions")
