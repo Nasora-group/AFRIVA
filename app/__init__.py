@@ -1,6 +1,6 @@
 """AFRIVA Flask application factory."""
 
-from flask import Flask, g, jsonify, redirect, render_template, request, url_for
+from flask import Flask, g, jsonify, redirect, request, url_for
 
 from .config import Config
 from .models import db
@@ -19,6 +19,7 @@ def create_app(config_object=Config):
     from . import auth
     from .api.analytics import analytics_api
     from .api.billing import billing_api
+    from .api.crm import crm_api
     from .api.inventory import inventory_api
     from .api.transfers import transfers_api
     from .middleware import tenant_middleware
@@ -37,6 +38,7 @@ def create_app(config_object=Config):
     app.register_blueprint(web_bp)
     app.register_blueprint(sales_bp)
     app.register_blueprint(pos_bp)
+    app.register_blueprint(crm_api)
     app.register_blueprint(inventory_api)
     app.register_blueprint(transfers_api)
     app.register_blueprint(billing_api)
