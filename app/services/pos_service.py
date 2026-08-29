@@ -9,6 +9,8 @@ from app.models import (
     POSSale,
     POSSaleLine,
     Product,
+    ProductBatch,
+    ProductStock,
     Store,
     db,
 )
@@ -59,6 +61,49 @@ def open_session(*, organization_id, register_id, user_id, opening_cash):
     return session
 
 
+def _consume_inventory(organization_id, store_id, product_id, quantity):
+    """Decrease store stock and consume non-expired batches FEFO, atomically."""
+    stock = (
+        ProductStock.query.filter_by(
+            organization_id=organization_id,
+            store_id=store_id,
+            product_id=product_id,
+        )
+        .with_for_update()
+        .first()
+    )
+    if stock is None or Decimal(str(stock.quantity)) < quantity:
+        raise POSValidationError("Insufficient stock for POS sale")
+
+    batches = (
+        ProductBatch.query.filter(
+            ProductBatch.organization_id == organization_id,
+            ProductBatch.store_id == store_id,
+            ProductBatch.product_id == product_id,
+            ProductBatch.quantity > 0,
+            db.or_(
+                ProductBatch.expiry_date.is_(None),
+                ProductBatch.expiry_date >= db.func.current_date(),
+            ),
+        )
+        .order_by(ProductBatch.expiry_date.asc().nullslast(), ProductBatch.id.asc())
+        .with_for_update()
+        .all()
+    )
+    batch_total = sum((Decimal(str(batch.quantity)) for batch in batches), Decimal("0"))
+    if batches and batch_total < quantity:
+        raise POSValidationError("Insufficient non-expired batch stock for POS sale")
+
+    stock.quantity = Decimal(str(stock.quantity)) - quantity
+    remaining = quantity
+    for batch in batches:
+        if remaining <= 0:
+            break
+        taken = min(Decimal(str(batch.quantity)), remaining)
+        batch.quantity -= taken
+        remaining -= taken
+
+
 def create_pos_sale(*, organization_id, session_id, lines, payments=None):
     session = CashSession.query.filter_by(
         id=session_id, organization_id=organization_id, status="open"
@@ -99,6 +144,12 @@ def create_pos_sale(*, organization_id, session_id, lines, payments=None):
                 unit_price=price,
                 line_total=line_total,
             )
+        )
+        _consume_inventory(
+            organization_id,
+            session.register.store_id,
+            product.id,
+            quantity,
         )
         total += line_total
     sale.total_amount = total

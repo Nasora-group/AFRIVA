@@ -3,7 +3,7 @@
 from flask import Blueprint, g, jsonify, request
 
 from app.auth import login_required
-from app.models import CashSession, POSRegister, Store
+from app.models import CashSession, POSRegister, Store, db
 from app.services.pos_service import (
     POSValidationError,
     close_session,
@@ -120,6 +120,7 @@ def create_sale():
             payments=payload.get("payments"),
         )
     except (POSValidationError, TypeError, ValueError) as exc:
+        db.session.rollback()
         return jsonify({"error": str(exc)}), 400
     return (
         jsonify(
