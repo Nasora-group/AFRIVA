@@ -5,7 +5,13 @@ from decimal import Decimal
 import pytest
 
 from app.models import POSRegister, Product, Store, db
-from app.services.pos_service import POSValidationError, close_session, create_pos_sale, money, open_session
+from app.services.pos_service import (
+    POSValidationError,
+    close_session,
+    create_pos_sale,
+    money,
+    open_session,
+)
 
 
 def pos_setup(tenant):
@@ -41,15 +47,24 @@ def test_money_validates_and_quantizes_values():
 def test_open_and_close_session(tenant):
     _, register, _ = pos_setup(tenant)
     session = open_session(
-        organization_id=tenant.id, register_id=register.id, user_id=1, opening_cash="100"
+        organization_id=tenant.id,
+        register_id=register.id,
+        user_id=1,
+        opening_cash="100",
     )
     assert session.status == "open"
     with pytest.raises(POSValidationError, match="already has an open session"):
         open_session(
-            organization_id=tenant.id, register_id=register.id, user_id=1, opening_cash="50"
+            organization_id=tenant.id,
+            register_id=register.id,
+            user_id=1,
+            opening_cash="50",
         )
     closed = close_session(
-        organization_id=tenant.id, session_id=session.id, user_id=1, closing_cash="125.50"
+        organization_id=tenant.id,
+        session_id=session.id,
+        user_id=1,
+        closing_cash="125.50",
     )
     assert closed.status == "closed"
     assert closed.closing_cash == Decimal("125.50")
@@ -58,7 +73,10 @@ def test_open_and_close_session(tenant):
 def test_create_pos_sale_with_multiple_payments(tenant):
     _, register, product = pos_setup(tenant)
     session = open_session(
-        organization_id=tenant.id, register_id=register.id, user_id=1, opening_cash="50"
+        organization_id=tenant.id,
+        register_id=register.id,
+        user_id=1,
+        opening_cash="50",
     )
     sale = create_pos_sale(
         organization_id=tenant.id,
@@ -77,7 +95,10 @@ def test_create_pos_sale_with_multiple_payments(tenant):
 def test_create_pos_sale_rejects_invalid_input(tenant):
     _, register, product = pos_setup(tenant)
     session = open_session(
-        organization_id=tenant.id, register_id=register.id, user_id=1, opening_cash="0"
+        organization_id=tenant.id,
+        register_id=register.id,
+        user_id=1,
+        opening_cash="0",
     )
     with pytest.raises(POSValidationError, match="At least one"):
         create_pos_sale(organization_id=tenant.id, session_id=session.id, lines=[])
