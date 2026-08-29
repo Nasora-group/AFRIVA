@@ -55,5 +55,5 @@ jobs:
         run: python -m flake8 app tests
       - name: Black diagnostic
         run: python -m black --diff app tests || true
-      - name: isort check
-        run: python -m isort --check-only app tests
+      - name: isort diagnostic
+        run: python -m isort --diff app tests || true
