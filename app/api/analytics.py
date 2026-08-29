@@ -1,5 +1,7 @@
 """Tenant-safe business intelligence endpoints."""
 
+from datetime import datetime, timezone
+
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 
@@ -16,6 +18,15 @@ def _organization_id():
     return organization.id
 
 
+def _period_start(period):
+    now = datetime.now(timezone.utc)
+    if period == "month":
+        return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if period == "year":
+        return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    return None
+
+
 @analytics_api.get("/summary")
 def summary():
     organization_id = _organization_id()
@@ -23,9 +34,13 @@ def summary():
     if period not in {"month", "year", "all"}:
         return jsonify({"error": "Unsupported period"}), 400
 
-    revenue, sales_count = db.session.query(
+    query = db.session.query(
         func.coalesce(func.sum(Sale.total_amount), 0), func.count(Sale.id)
-    ).filter(Sale.organization_id == organization_id).one()
+    ).filter(Sale.organization_id == organization_id)
+    start = _period_start(period)
+    if start is not None:
+        query = query.filter(Sale.sold_at >= start)
+    revenue, sales_count = query.one()
 
     return jsonify(
         {
