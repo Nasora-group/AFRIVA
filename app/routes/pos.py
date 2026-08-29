@@ -28,10 +28,7 @@ def stores():
     )
     return jsonify(
         {
-            "items": [
-                {"id": s.id, "name": s.name, "code": s.code}
-                for s in rows
-            ],
+            "items": [{"id": s.id, "name": s.name, "code": s.code} for s in rows],
         }
     )
 
