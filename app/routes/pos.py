@@ -42,7 +42,12 @@ def registers():
     return jsonify(
         {
             "items": [
-                {"id": r.id, "store_id": r.store_id, "name": r.name, "code": r.code}
+                {
+                    "id": r.id,
+                    "store_id": r.store_id,
+                    "name": r.name,
+                    "code": r.code,
+                }
                 for r in rows
             ]
         }
