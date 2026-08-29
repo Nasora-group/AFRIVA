@@ -1,15 +1,19 @@
-"""Server-side tenant context. Never trust organization_id from request input."""
+"""Server-side tenant context with PostgreSQL RLS and SQLite test compatibility."""
 
 from flask import abort, g, session
 from sqlalchemy import text
 
+from app.models import db
 from app.models.organization import Organization
 from app.models.user import OrganizationUser
-from app.models import db
 
 
 def _set_rls_context(user_id, organization_id=None):
-    """Set PostgreSQL RLS context on the current SQLAlchemy connection."""
+    """Set PostgreSQL RLS context when the active database supports it."""
+    bind = db.session.get_bind()
+    if bind is None or bind.dialect.name != "postgresql":
+        return
+
     db.session.execute(
         text("SELECT set_config('app.current_user_id', :value, false)"),
         {"value": str(user_id)},
