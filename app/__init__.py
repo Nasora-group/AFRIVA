@@ -18,12 +18,14 @@ def create_app(config_object=Config):
     from .api.pos import pos_api
     from .api.sales import sales_api
     from .api.sales_dashboard import sales_dashboard_api
+    from .api.transfers import transfers_api
 
     app.register_blueprint(crm_api)
     app.register_blueprint(inventory_api)
     app.register_blueprint(pos_api)
     app.register_blueprint(sales_api)
     app.register_blueprint(sales_dashboard_api)
+    app.register_blueprint(transfers_api)
 
     @app.before_request
     def security_context():
