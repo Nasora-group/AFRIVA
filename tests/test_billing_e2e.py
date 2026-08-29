@@ -6,7 +6,7 @@ from app.services.billing_service import BillingService
 
 def test_billing_lifecycle_and_tenant_isolation(app, inventory_context, monkeypatch):
     organization = inventory_context[0]
-    other_organization = type(organization)(name="Other Org")
+    other_organization = type(organization)(name="Other Org", slug="other-org-e2e")
     db.session.add(other_organization)
     db.session.flush()
     plan = Plan(
